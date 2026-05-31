@@ -11,6 +11,17 @@ export interface BspViewerOptions {
     onEntitySelect?: (entity: BspEntity | null) => void;
     onProgress?: (percent: number, message: string) => void;
     onLockChange?: (locked: boolean) => void;
+
+    // Viewport settings
+    pvsEnabled?: boolean;
+    showPointEntities?: boolean;
+    showBrushEntities?: boolean;
+    showBrushWireframes?: boolean;
+    aaaTriggerOpacity?: number;
+    entityConnectionsMode?: 'none' | 'selected' | 'all';
+    textureFiltering?: boolean;
+    lightmapFiltering?: boolean;
+    antialias?: boolean;
 }
 
 type EventCallback = (...args: any[]) => void;
@@ -25,7 +36,9 @@ export class BspViewer {
     private mapRenderer: MapRenderer;
     private clock: THREE.Clock;
     private requestRef: number = 0;
-    private options: BspViewerOptions;
+    private options: Required<BspViewerOptions>;
+
+    private selectedEntity: BspEntity | null = null;
 
     private resizeObserver: ResizeObserver;
     private onClickBound: (e: MouseEvent) => void;
@@ -33,17 +46,35 @@ export class BspViewer {
     private eventListeners: Map<string, Set<EventCallback>> = new Map();
 
     constructor(options: BspViewerOptions) {
-        this.options = options;
         this.container = options.container;
 
+        // Initialize options with defaults
+        this.options = {
+            container: options.container,
+            backgroundColor: options.backgroundColor ?? 0x050505,
+            showAxes: options.showAxes ?? true,
+            onEntitySelect: options.onEntitySelect ?? (() => {}),
+            onProgress: options.onProgress ?? (() => {}),
+            onLockChange: options.onLockChange ?? (() => {}),
+            pvsEnabled: options.pvsEnabled ?? false,
+            showPointEntities: options.showPointEntities ?? true,
+            showBrushEntities: options.showBrushEntities ?? true,
+            showBrushWireframes: options.showBrushWireframes ?? true,
+            aaaTriggerOpacity: options.aaaTriggerOpacity ?? 50,
+            entityConnectionsMode: options.entityConnectionsMode ?? 'none',
+            textureFiltering: options.textureFiltering ?? true,
+            lightmapFiltering: options.lightmapFiltering ?? true,
+            antialias: options.antialias ?? true
+        };
+
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(options.backgroundColor ?? 0x050505);
+        this.scene.background = new THREE.Color(this.options.backgroundColor);
 
         const aspect = this.container.clientWidth / this.container.clientHeight;
         this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 10000);
         this.camera.position.set(0, 500, 1000);
 
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = new THREE.WebGLRenderer({ antialias: this.options.antialias });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.container.appendChild(this.renderer.domElement);
@@ -54,7 +85,7 @@ export class BspViewer {
         // Internal progress handler that emits events
         const internalProgress = (percent: number, message: string) => {
             this.emit('progress', { percent, message });
-            this.options.onProgress?.(percent, message);
+            this.options.onProgress(percent, message);
         };
 
         this.mapRenderer = new MapRenderer(this.scene, internalProgress);
@@ -68,9 +99,8 @@ export class BspViewer {
         this.setupEventListeners();
         this.startAnimate();
 
-        if (options.showAxes !== undefined) {
-            this.mapRenderer.setAxesVisible(options.showAxes);
-        }
+        // Apply initial options
+        this.applyOptions();
 
         // Add initial options-based listeners if they exist
         if (options.onEntitySelect) this.addEventListener('entitySelect', options.onEntitySelect);
@@ -172,6 +202,8 @@ export class BspViewer {
 
     public async loadMap(bspBuffer: ArrayBuffer, wadBuffers: ArrayBuffer[], fgdText?: string) {
         await this.mapRenderer.loadMap(bspBuffer, wadBuffers, fgdText);
+        this.applyOptions();
+        this.setSelectedEntity(this.selectedEntity);
     }
 
     public resetView() {
@@ -216,22 +248,75 @@ export class BspViewer {
         this.eventListeners.get(event)?.forEach(callback => callback(...args));
     }
 
-    // Proxy methods to MapRenderer
-    public setPvsEnabled(enabled: boolean) { this.mapRenderer.setPvsEnabled(enabled); }
-    public setPointEntitiesVisible(visible: boolean) { this.mapRenderer.setEntitiesVisible(visible); }
-    public setBrushEntitiesVisible(visible: boolean) { this.mapRenderer.setBrushEntitiesVisible(visible); }
-    public setBrushWireframesVisible(visible: boolean) { this.mapRenderer.setBrushWireframesVisible(visible); }
-    public setAxesVisible(visible: boolean) { this.mapRenderer.setAxesVisible(visible); }
-    public setAaaTriggerOpacity(opacity: number) { this.mapRenderer.setAaaTriggerOpacity(opacity); }
-    public setEntityConnectionsMode(mode: 'none' | 'selected' | 'all') { this.mapRenderer.setEntityConnectionsMode(mode); }
-    public setTextureFiltering(enabled: boolean) { this.mapRenderer.setTextureFiltering(enabled); }
-    public setLightmapFiltering(enabled: boolean) { this.mapRenderer.setLightmapFiltering(enabled); }
+    public setOptions(options: Partial<BspViewerOptions>) {
+        this.options = { ...this.options, ...options };
+        this.applyOptions();
+
+        if (options.backgroundColor !== undefined) {
+            this.scene.background = new THREE.Color(this.options.backgroundColor);
+        }
+    }
+
+    private applyOptions() {
+        this.mapRenderer.setPvsEnabled(this.options.pvsEnabled);
+        this.mapRenderer.setEntitiesVisible(this.options.showPointEntities);
+        this.mapRenderer.setBrushEntitiesVisible(this.options.showBrushEntities);
+        this.mapRenderer.setBrushWireframesVisible(this.options.showBrushWireframes);
+        this.mapRenderer.setAxesVisible(this.options.showAxes);
+        this.mapRenderer.setAaaTriggerOpacity(this.options.aaaTriggerOpacity);
+        this.mapRenderer.setEntityConnectionsMode(this.options.entityConnectionsMode);
+        this.mapRenderer.setTextureFiltering(this.options.textureFiltering);
+        this.mapRenderer.setLightmapFiltering(this.options.lightmapFiltering);
+    }
+
+    // Proxy methods to MapRenderer (kept for backward compatibility and granular control)
+    public setPvsEnabled(enabled: boolean) {
+        this.options.pvsEnabled = enabled;
+        this.mapRenderer.setPvsEnabled(enabled);
+    }
+    public setPointEntitiesVisible(visible: boolean) {
+        this.options.showPointEntities = visible;
+        this.mapRenderer.setEntitiesVisible(visible);
+    }
+    public setBrushEntitiesVisible(visible: boolean) {
+        this.options.showBrushEntities = visible;
+        this.mapRenderer.setBrushEntitiesVisible(visible);
+    }
+    public setBrushWireframesVisible(visible: boolean) {
+        this.options.showBrushWireframes = visible;
+        this.mapRenderer.setBrushWireframesVisible(visible);
+    }
+    public setAxesVisible(visible: boolean) {
+        this.options.showAxes = visible;
+        this.mapRenderer.setAxesVisible(visible);
+    }
+    public setAaaTriggerOpacity(opacity: number) {
+        this.options.aaaTriggerOpacity = opacity;
+        this.mapRenderer.setAaaTriggerOpacity(opacity);
+    }
+    public setEntityConnectionsMode(mode: 'none' | 'selected' | 'all') {
+        this.options.entityConnectionsMode = mode;
+        this.mapRenderer.setEntityConnectionsMode(mode);
+    }
+    public setTextureFiltering(enabled: boolean) {
+        this.options.textureFiltering = enabled;
+        this.mapRenderer.setTextureFiltering(enabled);
+    }
+    public setLightmapFiltering(enabled: boolean) {
+        this.options.lightmapFiltering = enabled;
+        this.mapRenderer.setLightmapFiltering(enabled);
+    }
 
     public setSelectedEntity(entity: BspEntity | null) {
+        this.selectedEntity = entity;
         if (entity) {
             this.mapRenderer.highlightEntity(entity);
         } else {
             this.mapRenderer.clearHighlight();
+        }
+        // Always refresh connections if mode is 'selected'
+        if (this.options.entityConnectionsMode === 'selected') {
+            this.mapRenderer.setEntityConnectionsMode('selected');
         }
         this.emit('entitySelect', entity);
     }
