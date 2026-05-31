@@ -1,8 +1,9 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import { BspViewer } from '../core/BspViewer';
+import { BspEntity } from '../parsers/BspParser';
 
 interface ViewerCanvasProps {
-    onEntitySelect: (entity: any) => void;
+    onEntitySelect: (entity: BspEntity | null) => void;
     onLockChange?: (locked: boolean) => void;
     pvsEnabled: boolean;
     showPointEntities: boolean;
@@ -13,7 +14,7 @@ interface ViewerCanvasProps {
     entityConnectionsMode: 'none' | 'selected' | 'all';
     textureFiltering: boolean;
     lightmapFiltering: boolean;
-    selectedEntity: any;
+    selectedEntity: BspEntity | null;
     onProgress?: (percent: number, message: string) => void;
 }
 

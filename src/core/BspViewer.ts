@@ -2,12 +2,13 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { MapRenderer } from '../engine/MapRenderer';
 import { Navigator } from '../engine/Navigator';
+import { BspEntity } from '../parsers/BspParser';
 
 export interface BspViewerOptions {
     container: HTMLElement;
     backgroundColor?: number;
     showAxes?: boolean;
-    onEntitySelect?: (entity: any) => void;
+    onEntitySelect?: (entity: BspEntity | null) => void;
     onProgress?: (percent: number, message: string) => void;
     onLockChange?: (locked: boolean) => void;
 }
@@ -226,7 +227,7 @@ export class BspViewer {
     public setTextureFiltering(enabled: boolean) { this.mapRenderer.setTextureFiltering(enabled); }
     public setLightmapFiltering(enabled: boolean) { this.mapRenderer.setLightmapFiltering(enabled); }
 
-    public setSelectedEntity(entity: any) {
+    public setSelectedEntity(entity: BspEntity | null) {
         if (entity) {
             this.mapRenderer.highlightEntity(entity);
         } else {
