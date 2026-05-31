@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoldSrc BSP Viewer - Vanilla JS Example</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+        }
+        #viewer-container {
+            width: 100%;
+            height: 100%;
+        }
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        #status {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .controls-hint {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui-overlay">
+        <div id="status">Initializing...</div>
+        <div class="controls-hint">
+            W,A,S,D to move • Click to lock mouse • ESC to unlock
+        </div>
+    </div>
+    <div id="viewer-container"></div>
+
+    <!-- Load the library from the dist folder -->
+    <!-- In a real project, you would use: import { BspViewer } from 'goldsrc-bsp-viewer' -->
+    <script type="module">
+        import { BspViewer } from '../../dist/goldsrc-bsp-viewer.js';
+
+        async function initViewer() {
+            const statusEl = document.getElementById('status');
+            const container = document.getElementById('viewer-container');
+
+            try {
+                // 1. Initialize the viewer
+                const viewer = new BspViewer({
+                    container: container,
+                    antialias: true,
+                    backgroundColor: 0x050505,
+                    showAxes: true
+                });
+
+                // 2. Set up event listeners
+                viewer.addEventListener('progress', (data) => {
+                    statusEl.innerText = `Loading: ${data.message} (${data.percent}%)`;
+                });
+
+                viewer.addEventListener('lockChange', (locked) => {
+                    console.log('Mouse locked:', locked);
+                });
+
+                // 3. Load a map
+                // Replace these with actual URLs to your .bsp and .wad files
+                const bspUrl = '../../public/test.bsp'; // Adjust path as needed
+                const wadUrls = []; // Add your .wad URLs here
+
+                statusEl.innerText = 'Fetching map files...';
+
+                // Helper to fetch files as ArrayBuffer
+                const fetchBuffer = async (url) => {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+                    return await response.ok ? response.arrayBuffer() : null;
+                };
+
+                // In this example, we attempt to load a test map if it exists
+                try {
+                    const bspBuffer = await fetchBuffer(bspUrl);
+                    const wadBuffers = await Promise.all(wadUrls.map(url => fetchBuffer(url)));
+
+                    await viewer.loadMap(bspBuffer, wadBuffers);
+                    statusEl.innerText = 'Map Loaded. Click to explore.';
+                } catch (loadError) {
+                    console.warn('Could not load default map. Please provide your own files.', loadError);
+                    statusEl.innerText = 'Ready. (No map loaded)';
+                }
+
+            } catch (err) {
+                console.error('Initialization error:', err);
+                statusEl.innerText = 'Error initializing viewer: ' + err.message;
+            }
+        }
+
+        initViewer();
+    </script>
+</body>
+</html>

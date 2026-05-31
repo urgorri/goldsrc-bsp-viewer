@@ -3,7 +3,20 @@
   "private": false,
   "version": "1.0.0",
   "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "author": "Gastón Urgorri <urgorrigaston@gmail.com> (https://github.com/urgorri)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/urgorri/goldsrc-bsp-viewer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/urgorri/goldsrc-bsp-viewer/issues"
+  },
+  "homepage": "https://github.com/urgorri/goldsrc-bsp-viewer",
   "main": "./dist/goldsrc-bsp-viewer.umd.cjs",
   "module": "./dist/goldsrc-bsp-viewer.js",
   "types": "./dist/index.d.ts",
@@ -15,7 +28,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "keywords": [
     "goldsrc",
