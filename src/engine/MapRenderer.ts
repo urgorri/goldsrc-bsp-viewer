@@ -41,6 +41,10 @@ export class MapRenderer {
         this.onProgress = onProgress;
     }
 
+    public dispose() {
+        this.cleanup();
+    }
+
     private cleanup() {
         this.clearHighlight();
         this.clearConnections();

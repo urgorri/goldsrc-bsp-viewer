@@ -1,5 +1,5 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
-import { BspViewer } from '../engine/BspViewer';
+import { BspViewer } from '../core/BspViewer';
 
 interface ViewerCanvasProps {
     onEntitySelect: (entity: any) => void;
@@ -73,7 +73,7 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
         viewerRef.current = viewer;
 
         return () => {
-            viewer.dispose();
+            viewer.destroy();
             viewerRef.current = null;
         };
     }, [onEntitySelect, onLockChange, onProgress]);

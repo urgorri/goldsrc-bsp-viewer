@@ -1,4 +1,4 @@
-export * from './engine/BspViewer';
+export * from './core/BspViewer';
 export * from './engine/MapRenderer';
 export * from './engine/Navigator';
 export * from './parsers/BspParser';

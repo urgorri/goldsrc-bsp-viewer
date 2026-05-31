@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
-import { MapRenderer } from './MapRenderer';
-import { Navigator } from './Navigator';
+import { MapRenderer } from '../engine/MapRenderer';
+import { Navigator } from '../engine/Navigator';
 
 export interface BspViewerOptions {
     container: HTMLElement;
@@ -11,6 +11,8 @@ export interface BspViewerOptions {
     onProgress?: (percent: number, message: string) => void;
     onLockChange?: (locked: boolean) => void;
 }
+
+type EventCallback = (...args: any[]) => void;
 
 export class BspViewer {
     private container: HTMLElement;
@@ -24,8 +26,10 @@ export class BspViewer {
     private requestRef: number = 0;
     private options: BspViewerOptions;
 
-    private onResizeBound: () => void;
+    private resizeObserver: ResizeObserver;
     private onClickBound: (e: MouseEvent) => void;
+
+    private eventListeners: Map<string, Set<EventCallback>> = new Map();
 
     constructor(options: BspViewerOptions) {
         this.options = options;
@@ -45,11 +49,20 @@ export class BspViewer {
 
         this.controls = new PointerLockControls(this.camera, this.renderer.domElement);
         this.navigator = new Navigator(this.camera);
-        this.mapRenderer = new MapRenderer(this.scene, options.onProgress);
+
+        // Internal progress handler that emits events
+        const internalProgress = (percent: number, message: string) => {
+            this.emit('progress', { percent, message });
+            this.options.onProgress?.(percent, message);
+        };
+
+        this.mapRenderer = new MapRenderer(this.scene, internalProgress);
         this.clock = new THREE.Clock();
 
-        this.onResizeBound = this.onResize.bind(this);
         this.onClickBound = this.onClick.bind(this);
+
+        this.resizeObserver = new ResizeObserver(() => this.onResize());
+        this.resizeObserver.observe(this.container);
 
         this.setupEventListeners();
         this.startAnimate();
@@ -57,27 +70,34 @@ export class BspViewer {
         if (options.showAxes !== undefined) {
             this.mapRenderer.setAxesVisible(options.showAxes);
         }
+
+        // Add initial options-based listeners if they exist
+        if (options.onEntitySelect) this.addEventListener('entitySelect', options.onEntitySelect);
+        if (options.onLockChange) this.addEventListener('lockChange', options.onLockChange);
     }
 
     private setupEventListeners() {
         this.controls.addEventListener('lock', () => {
             this.navigator.enabled = true;
-            this.options.onLockChange?.(true);
+            this.emit('lockChange', true);
         });
 
         this.controls.addEventListener('unlock', () => {
             this.navigator.enabled = false;
-            this.options.onLockChange?.(false);
+            this.emit('lockChange', false);
         });
 
-        window.addEventListener('resize', this.onResizeBound);
         this.container.addEventListener('click', this.onClickBound);
     }
 
     private onResize() {
-        this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
+        const width = this.container.clientWidth;
+        const height = this.container.clientHeight;
+        if (width === 0 || height === 0) return;
+
+        this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+        this.renderer.setSize(width, height);
     }
 
     private onClick() {
@@ -107,7 +127,6 @@ export class BspViewer {
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
 
-        // Robust logic from original implementation
         const objectsToIntersect = this.scene.children.filter(obj =>
             obj.name !== "entity_connections" &&
             obj.name !== "selection_highlight" &&
@@ -119,7 +138,6 @@ export class BspViewer {
         if (intersects.length > 0) {
             const obj = intersects[0].object;
 
-            // Check visibility
             let current: THREE.Object3D | null = obj;
             let visible = true;
             while (current) {
@@ -131,8 +149,7 @@ export class BspViewer {
             }
 
             if (!visible) {
-                this.options.onEntitySelect?.(null);
-                this.mapRenderer.clearHighlight();
+                this.setSelectedEntity(null);
                 return;
             }
 
@@ -146,16 +163,9 @@ export class BspViewer {
                 search = search.parent;
             }
 
-            if (entity) {
-                this.options.onEntitySelect?.(entity);
-                this.mapRenderer.highlightEntity(entity);
-            } else {
-                this.options.onEntitySelect?.(null);
-                this.mapRenderer.clearHighlight();
-            }
+            this.setSelectedEntity(entity);
         } else {
-            this.options.onEntitySelect?.(null);
-            this.mapRenderer.clearHighlight();
+            this.setSelectedEntity(null);
         }
     }
 
@@ -168,16 +178,41 @@ export class BspViewer {
         this.camera.lookAt(0, 0, 0);
     }
 
-    public dispose() {
+    public destroy() {
         cancelAnimationFrame(this.requestRef);
-        window.removeEventListener('resize', this.onResizeBound);
+        this.resizeObserver.disconnect();
         this.container.removeEventListener('click', this.onClickBound);
         this.controls.dispose();
         this.navigator.dispose();
+        this.mapRenderer.dispose();
         this.renderer.dispose();
+
         if (this.container.contains(this.renderer.domElement)) {
             this.container.removeChild(this.renderer.domElement);
         }
+
+        this.eventListeners.clear();
+    }
+
+    // Alias for compatibility if needed, but destroy is the preferred name now
+    public dispose() {
+        this.destroy();
+    }
+
+    // Event Emitter methods
+    public addEventListener(event: string, callback: EventCallback) {
+        if (!this.eventListeners.has(event)) {
+            this.eventListeners.set(event, new Set());
+        }
+        this.eventListeners.get(event)!.add(callback);
+    }
+
+    public removeEventListener(event: string, callback: EventCallback) {
+        this.eventListeners.get(event)?.delete(callback);
+    }
+
+    private emit(event: string, ...args: any[]) {
+        this.eventListeners.get(event)?.forEach(callback => callback(...args));
     }
 
     // Proxy methods to MapRenderer
@@ -197,5 +232,6 @@ export class BspViewer {
         } else {
             this.mapRenderer.clearHighlight();
         }
+        this.emit('entitySelect', entity);
     }
 }
