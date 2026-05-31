@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BspParser } from '../parsers/BspParser';
+import { BspParser, BspEntity, ParsedBsp } from '../parsers/BspParser';
 import { WadParser } from '../parsers/WadParser';
 import { generateFaceGeometry, convertVector } from './GeometryGenerator';
 import { bspShader } from './Shaders';
@@ -8,7 +8,7 @@ import { PvsManager } from './PvsManager';
 
 export class MapRenderer {
     private scene: THREE.Scene;
-    private bsp: any;
+    private bsp: ParsedBsp | null = null;
     private textures: Map<string, THREE.Texture> = new Map();
     private entityRenderer: EntityRenderer;
     private entitiesGroup: THREE.Group | null = null;
@@ -30,8 +30,8 @@ export class MapRenderer {
     private axesVisible: boolean = true;
     private aaaTriggerOpacity: number = 0.5;
     private entityConnectionsMode: 'none' | 'selected' | 'all' = 'none';
-    private entityCenters: Map<any, THREE.Vector3> = new Map();
-    private selectedEntity: any = null;
+    private entityCenters: Map<BspEntity, THREE.Vector3> = new Map();
+    private selectedEntity: BspEntity | null = null;
 
     private onProgress?: (percent: number, message: string) => void;
 
@@ -39,6 +39,10 @@ export class MapRenderer {
         this.scene = scene;
         this.entityRenderer = new EntityRenderer(scene);
         this.onProgress = onProgress;
+    }
+
+    public dispose() {
+        this.cleanup();
     }
 
     private cleanup() {
@@ -144,23 +148,24 @@ export class MapRenderer {
     }
 
     private calculateEntityCenters() {
+        if (!this.bsp) return;
         this.entityCenters.clear();
-        this.bsp.entities.forEach((ent: any) => {
+        this.bsp.entities.forEach((ent: BspEntity) => {
             if (ent.model && ent.model.startsWith('*')) {
                 const modelIdx = parseInt(ent.model.substring(1));
-                const model = this.bsp.models[modelIdx];
+                const model = this.bsp!.models[modelIdx];
                 if (model) {
                     // Compute center from faces
                     const min = new THREE.Vector3(Infinity, Infinity, Infinity);
                     const max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
 
                     for (let i = 0; i < model.numFaces; i++) {
-                        const face = this.bsp.faces[model.firstFace + i];
+                        const face = this.bsp!.faces[model.firstFace + i];
                         for (let j = 0; j < face.numEdges; j++) {
-                            const surfEdge = this.bsp.surfEdges[face.firstEdge + j];
-                            const edge = this.bsp.edges[Math.abs(surfEdge)];
+                            const surfEdge = this.bsp!.surfEdges[face.firstEdge + j];
+                            const edge = this.bsp!.edges[Math.abs(surfEdge)];
                             const vIdx = surfEdge >= 0 ? edge.v[0] : edge.v[1];
-                            const v = this.bsp.vertices[vIdx];
+                            const v = this.bsp!.vertices[vIdx];
                             const pos = convertVector(v);
                             min.min(pos);
                             max.max(pos);
@@ -238,6 +243,7 @@ export class MapRenderer {
     }
 
     private calcFaceTextureStep(faceIdx: number): number {
+        if (!this.bsp) return 16;
         const face = this.bsp.faces[faceIdx];
         const texInfo = this.bsp.texInfos[face.texInfo];
         if (this.bsp.version === 31) return 8;
@@ -249,6 +255,7 @@ export class MapRenderer {
     }
 
     private generateLightmapAtlas() {
+        if (!this.bsp) return;
         const atlasData = new Uint8Array(this.atlasWidth * this.atlasHeight * 4); // Use 4 for RGBA
         let curX = 0;
         let curY = 0;
@@ -269,10 +276,10 @@ export class MapRenderer {
             const firstEdge = face.firstEdge;
             const numEdges = face.numEdges;
             for (let j = 0; j < numEdges; j++) {
-                const surfEdge = this.bsp.surfEdges[firstEdge + j];
-                const edge = this.bsp.edges[Math.abs(surfEdge)];
+                const surfEdge = this.bsp!.surfEdges[firstEdge + j];
+                const edge = this.bsp!.edges[Math.abs(surfEdge)];
                 const vIdx = surfEdge >= 0 ? edge.v[0] : edge.v[1];
-                const v = this.bsp.vertices[vIdx];
+                const v = this.bsp!.vertices[vIdx];
                 const u = (v.x * texInfo.s.x + v.y * texInfo.s.y + v.z * texInfo.s.z) + texInfo.shiftS;
                 const v_tex = (v.x * texInfo.t.x + v.y * texInfo.t.y + v.z * texInfo.t.z) + texInfo.shiftT;
                 minU = Math.min(minU, u); maxU = Math.max(maxU, u);
@@ -337,7 +344,8 @@ export class MapRenderer {
     }
 
     private getEntityByModelIndex(modelIdx: number) {
-        return this.bsp.entities.find((ent: any) => ent.model === `*${modelIdx}`);
+        if (!this.bsp) return undefined;
+        return this.bsp.entities.find((ent: BspEntity) => ent.model === `*${modelIdx}`);
     }
 
     private createThreeTexture(entry: any): THREE.Texture {
@@ -399,6 +407,7 @@ export class MapRenderer {
     }
 
     private renderWorld() {
+        if (!this.bsp) return;
         this.worldGroup = new THREE.Group();
         this.worldGroup.name = "world";
         this.leafToMaterials.clear();
@@ -406,7 +415,7 @@ export class MapRenderer {
 
         // Separate world geometry (Model 0) from brush entities (Model > 0)
         // Actually, we need to know which faces belong to which model.
-        const modelFaces: Set<number>[] = this.bsp.models.map((m: any) => {
+        const modelFaces: Set<number>[] = this.bsp.models.map((m) => {
             const faces = new Set<number>();
             for (let i = 0; i < m.numFaces; i++) {
                 faces.add(m.firstFace + i);
@@ -457,10 +466,10 @@ export class MapRenderer {
         }
 
         // Second pass: Map leafs to materials based on which faces they contain
-        this.bsp.leaves.forEach((leaf: any, leafIdx: number) => {
+        this.bsp.leaves.forEach((leaf, leafIdx: number) => {
             if (!this.leafToMaterials.has(leafIdx)) this.leafToMaterials.set(leafIdx, new Set());
             for (let i = 0; i < leaf.numMarkSurfaces; i++) {
-                const faceIdx = this.bsp.markSurfaces[leaf.firstMarkSurface + i];
+                const faceIdx = this.bsp!.markSurfaces[leaf.firstMarkSurface + i];
                 const matKey = faceToMatKey[faceIdx];
                 if (matKey) {
                     this.leafToMaterials.get(leafIdx)!.add(matKey);
@@ -654,13 +663,13 @@ export class MapRenderer {
                     const ent = obj.userData.entity;
                     const modelIdx = ent?.model?.startsWith('*') ? parseInt(ent.model.substring(1)) : -1;
                     if (modelIdx !== -1) {
-                        const m = this.bsp.models[modelIdx];
+                        const m = this.bsp!.models[modelIdx];
                         let hasAaaTrigger = false;
                         for (let f = 0; f < m.numFaces; f++) {
                             const faceIdx = m.firstFace + f;
-                            const face = this.bsp.faces[faceIdx];
-                            const texInfo = this.bsp.texInfos[face.texInfo];
-                            const miptex = this.bsp.textures[texInfo.miptex];
+                            const face = this.bsp!.faces[faceIdx];
+                            const texInfo = this.bsp!.texInfos[face.texInfo];
+                            const miptex = this.bsp!.textures[texInfo.miptex];
                             if (miptex && miptex.name.toLowerCase() === 'aaatrigger') {
                                 hasAaaTrigger = true;
                                 break;
@@ -714,7 +723,7 @@ export class MapRenderer {
         }
     }
 
-    public highlightEntity(entity: any) {
+    public highlightEntity(entity: BspEntity) {
         this.clearHighlight();
         this.selectedEntity = entity;
 
@@ -829,8 +838,8 @@ export class MapRenderer {
         this.connectionsGroup.name = "entity_connections";
 
         const entities = this.bsp.entities;
-        const targetNameToEnts = new Map<string, any[]>();
-        entities.forEach((ent: any) => {
+        const targetNameToEnts = new Map<string, BspEntity[]>();
+        entities.forEach((ent: BspEntity) => {
             if (ent.targetname) {
                 const name = ent.targetname.toLowerCase();
                 if (!targetNameToEnts.has(name)) targetNameToEnts.set(name, []);
@@ -838,7 +847,7 @@ export class MapRenderer {
             }
         });
 
-        entities.forEach((ent: any) => {
+        entities.forEach((ent: BspEntity) => {
             if (ent.target) {
                 const targetName = ent.target.toLowerCase();
                 const targets = targetNameToEnts.get(targetName);

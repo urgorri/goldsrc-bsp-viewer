@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/urgorri/goldsrc-bsp-viewer/releases)
 
-A high-performance, web-based GoldSrc (Half-Life) BSP map viewer built with **React 18**, **Three.js**, **Vite**, and **Tailwind CSS**.
+A high-performance, framework-agnostic GoldSrc (Half-Life) BSP map viewer library built with **Three.js**. It also includes an optional **React** wrapper for easy integration.
 
 ---
 
@@ -11,9 +11,52 @@ A high-performance, web-based GoldSrc (Half-Life) BSP map viewer built with **Re
 
 ![GoldSrc BSP Viewer Demo 1](./resources/demo1.gif)
 
-![GoldSrc BSP Viewer Demo 2](./resources/demo2.gif)
+---
 
-![GoldSrc BSP Viewer Demo 3](./resources/demo3.gif)
+## 🚀 Quick Start (Vanilla JS)
+
+Install the library via npm:
+
+```bash
+npm install goldsrc-bsp-viewer
+```
+
+Integrate it into any DOM container:
+
+```javascript
+import { BspViewer } from 'goldsrc-bsp-viewer';
+
+const viewer = new BspViewer({
+  container: document.getElementById('viewer-root'),
+  antialias: true
+});
+
+// Load a map (buffers can be obtained via fetch, file inputs, etc.)
+await viewer.loadMap(bspArrayBuffer, [wadArrayBuffer1, wadArrayBuffer2]);
+```
+
+---
+
+## ⚛️ React Usage
+
+The library includes a `ViewerCanvas` component for React applications.
+
+```tsx
+import { ViewerCanvas } from 'goldsrc-bsp-viewer';
+
+function App() {
+  return (
+    <div style={{ width: '100vw', height: '100vh' }}>
+      <ViewerCanvas
+        pvsEnabled={true}
+        showPointEntities={true}
+        // ... other options
+        onProgress={(percent, message) => console.log(`${message}: ${percent}%`)}
+      />
+    </div>
+  );
+}
+```
 
 ---
 
@@ -23,54 +66,70 @@ A high-performance, web-based GoldSrc (Half-Life) BSP map viewer built with **Re
 - **🖼️ WAD3 Support**: Dynamic loading of external textures from multiple `.wad` files.
 - **💡 Advanced Lightmapping**: High-quality lighting using atlas-based lightmaps with overbrightening and gamma correction.
 - **🔍 Entity Inspector**: Interactive selection and inspection of entity key-value pairs.
-- **🔗 Entity Connections**: Visualize `target` and `targetname` relationships with color-coded lines.
-- **🏗️ FGD Integration**: Support for FGD files to provide meaningful metadata for map entities.
+- **🔗 Entity Connections**: Visualize `target` and `targetname` relationships.
+- **🏗️ FGD Integration**: Support for FGD files for meaningful entity metadata.
 - **🕹️ FPS Controls**: Smooth noclip movement with acceleration and friction.
-- **🛠️ Customization**: Toggleable wireframes, axes, transparency for triggers, and configurable texture filtering.
+- **🛠️ Customization**: Toggleable wireframes, axes, transparency, and texture filtering.
 
-## 🚀 Getting Started
+---
 
-### Prerequisites
+## 📖 Detailed Usage
 
-- [Node.js](https://nodejs.org/) (v18 or newer)
-- npm, yarn, or pnpm
+### Initializing the Viewer
 
-### Installation
+The `BspViewer` constructor accepts an options object:
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/urgorri/goldsrc-bsp-viewer.git
-   cd goldsrc-bsp-viewer
-   ```
+```typescript
+const viewer = new BspViewer({
+    container: HTMLElement,      // Required
+    backgroundColor: number,     // Default: 0x050505
+    antialias: boolean,          // Default: true
+    showAxes: boolean,           // Default: true
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+    // Callbacks
+    onProgress: (percent, msg) => { ... },
+    onEntitySelect: (entity) => { ... },
+    onLockChange: (locked) => { ... },
 
-3. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
+    // Rendering Options
+    pvsEnabled: boolean,
+    textureFiltering: boolean,
+    lightmapFiltering: boolean,
+    // ... and more
+});
+```
 
-4. **Build for production:**
-   ```bash
-   npm run build
-   ```
+### Loading Files
 
-## 📖 Usage
+You need to provide the files as `ArrayBuffer`. Here is a common pattern using `fetch`:
 
-### Loading a Map
+```javascript
+async function loadMap(mapName) {
+    const bspResponse = await fetch(`/maps/${mapName}.bsp`);
+    const bspBuffer = await bspResponse.arrayBuffer();
 
-1. Open the application in your browser.
-2. Click the **File Icon** in the top-left menu.
-3. **Important**: Select all necessary files at once in the file picker:
-   - One `.bsp` file (Required).
-   - Relevant `.wad` files for textures (Recommended).
-   - An `.fgd` file for better entity names (Optional).
-4. Wait for the status bar to indicate "Ready".
+    const wadResponse = await fetch(`/textures/halflife.wad`);
+    const wadBuffer = await wadResponse.arrayBuffer();
 
-### Controls
+    await viewer.loadMap(bspBuffer, [wadBuffer]);
+}
+```
+
+### Event Handling
+
+```javascript
+viewer.addEventListener('progress', ({ percent, message }) => {
+    console.log(`Loading: ${percent}% - ${message}`);
+});
+
+viewer.addEventListener('entitySelect', (entity) => {
+    if (entity) console.log('Selected entity class:', entity.classname);
+});
+```
+
+---
+
+## 🕹️ Controls
 
 | Action | Control |
 | :--- | :--- |
@@ -81,13 +140,7 @@ A high-performance, web-based GoldSrc (Half-Life) BSP map viewer built with **Re
 | **Select Entity** | `Left Click` (While locked) |
 | **Unlock Mouse** | `Esc` |
 
-## 🛠️ Tech Stack
-
-- **Framework**: [React 18](https://reactjs.org/)
-- **3D Engine**: [Three.js](https://threejs.org/)
-- **Build Tool**: [Vite](https://vitejs.dev/)
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
+---
 
 ## 🤝 Contributing
 

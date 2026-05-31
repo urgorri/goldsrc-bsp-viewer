@@ -96,6 +96,34 @@ export interface BspLeaf {
     ambientLevels: number[];
 }
 
+export interface BspEntity {
+    classname: string;
+    origin?: string;
+    model?: string;
+    targetname?: string;
+    target?: string;
+    [key: string]: string | undefined;
+}
+
+export interface ParsedBsp {
+    version: number;
+    entities: BspEntity[];
+    vertices: Vector3[];
+    edges: BspEdge[];
+    surfEdges: number[];
+    faces: BspFace[];
+    texInfos: BspTexInfo[];
+    planes: any[];
+    textures: BspMiptex[];
+    lighting: Uint8Array;
+    visibility: Uint8Array;
+    models: BspModel[];
+    nodes: BspNode[];
+    leaves: BspLeaf[];
+    markSurfaces: number[];
+    clipNodes: any[];
+}
+
 export class BspParser {
     private view: DataView;
 
@@ -103,7 +131,7 @@ export class BspParser {
         this.view = new DataView(buffer);
     }
 
-    public parse(): any {
+    public parse(): ParsedBsp {
         const version = this.view.getInt32(0, true);
         if (version !== 30) {
             console.warn(`Unsupported BSP version: ${version}. Expected 30.`);
@@ -153,23 +181,29 @@ export class BspParser {
         };
     }
 
-    private parseEntities(lump: BspLump): any[] {
+    private parseEntities(lump: BspLump): BspEntity[] {
         const text = new TextDecoder().decode(new Uint8Array(this.view.buffer, lump.offset, lump.length));
-        const entities: any[] = [];
-        let currentEntity: any = null;
+        const entities: BspEntity[] = [];
+        let currentEntity: BspEntity | null = null;
 
         const lines = text.split('\n');
         for (let line of lines) {
             line = line.trim();
             if (line === '{') {
-                currentEntity = {};
+                currentEntity = { classname: "" };
             } else if (line === '}') {
-                if (currentEntity) entities.push(currentEntity);
+                if (currentEntity && currentEntity.classname) entities.push(currentEntity);
                 currentEntity = null;
             } else if (currentEntity) {
                 const match = line.match(/"(.*)"\s+"(.*)"/);
                 if (match) {
-                    currentEntity[match[1]] = match[2];
+                    const key = match[1];
+                    const value = match[2];
+                    if (key === 'classname') {
+                        currentEntity.classname = value;
+                    } else {
+                        currentEntity[key] = value;
+                    }
                 }
             }
         }
