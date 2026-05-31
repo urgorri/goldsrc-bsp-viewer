@@ -14,6 +14,7 @@ interface ViewerCanvasProps {
     entityConnectionsMode: 'none' | 'selected' | 'all';
     textureFiltering: boolean;
     lightmapFiltering: boolean;
+    antialias?: boolean;
     selectedEntity: BspEntity | null;
     onProgress?: (percent: number, message: string) => void;
 }
@@ -36,6 +37,7 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
     entityConnectionsMode,
     textureFiltering,
     lightmapFiltering,
+    antialias,
     selectedEntity,
     onProgress
 }, ref) => {
@@ -80,7 +82,8 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
             aaaTriggerOpacity,
             entityConnectionsMode,
             textureFiltering,
-            lightmapFiltering
+            lightmapFiltering,
+            antialias
         });
 
         viewerRef.current = viewer;

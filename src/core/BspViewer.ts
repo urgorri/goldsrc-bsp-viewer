@@ -21,6 +21,7 @@ export interface BspViewerOptions {
     entityConnectionsMode?: 'none' | 'selected' | 'all';
     textureFiltering?: boolean;
     lightmapFiltering?: boolean;
+    antialias?: boolean;
 }
 
 type EventCallback = (...args: any[]) => void;
@@ -62,7 +63,8 @@ export class BspViewer {
             aaaTriggerOpacity: options.aaaTriggerOpacity ?? 50,
             entityConnectionsMode: options.entityConnectionsMode ?? 'none',
             textureFiltering: options.textureFiltering ?? true,
-            lightmapFiltering: options.lightmapFiltering ?? true
+            lightmapFiltering: options.lightmapFiltering ?? true,
+            antialias: options.antialias ?? true
         };
 
         this.scene = new THREE.Scene();
@@ -72,7 +74,7 @@ export class BspViewer {
         this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 10000);
         this.camera.position.set(0, 500, 1000);
 
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = new THREE.WebGLRenderer({ antialias: this.options.antialias });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.container.appendChild(this.renderer.domElement);
