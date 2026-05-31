@@ -13,7 +13,7 @@ export default defineConfig({
       include: ['src'],
       exclude: ['src/main.tsx', 'src/App.tsx', 'src/components/MapLoader.tsx'],
       insertTypesEntry: true,
-      entryRoot: 'src',
+      rollupTypes: true,
       tsconfigPath: resolve(__dirname, 'tsconfig.app.json'),
     })
   ],
