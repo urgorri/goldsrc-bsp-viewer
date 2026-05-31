@@ -1,0 +1,23 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.0] - 2026-05-31
+
+### Added
+- Initial release of the GoldSrc BSP Viewer.
+- Support for GoldSrc (Half-Life) BSP v30 map parsing.
+- WAD3 texture loading.
+- Real-time Lightmap rendering with atlas support.
+- Interactive Entity Inspector.
+- FGD metadata integration.
+- Standard FPS-style "Noclip" controls.
+- Entity connection visualization (target/targetname).
+- Toggleable brush wireframes and map axes.
+- Support for AAA-trigger transparency.
+- Adjustable texture and lightmap filtering.
+- PVS-based visibility (hidden/disabled by default).
+- Repository documentation: LICENSE, README, CONTRIBUTING, CHANGELOG.

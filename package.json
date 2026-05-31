@@ -1,0 +1,45 @@
+{
+  "name": "goldsrc-bsp-viewer",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "author": "Gastón Urgorri <urgorrigaston@gmail.com> (https://github.com/urgorri)",
+  "keywords": [
+    "goldsrc",
+    "bsp-viewer",
+    "threejs",
+    "react",
+    "webgl",
+    "half-life",
+    "bsp",
+    "retro-gaming"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide-react": "^0.474.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.172.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@types/three": "^0.172.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.18.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.18",
+    "globals": "^15.14.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "~5.6.2",
+    "typescript-eslint": "^8.20.0",
+    "vite": "^6.0.5"
+  }
+}
