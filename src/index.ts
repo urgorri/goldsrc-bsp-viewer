@@ -32,3 +32,5 @@ export type { FgdClass } from './parsers/FgdParser';
 // React Wrapper
 export { ViewerCanvas } from './components/ViewerCanvas';
 export type { ViewerCanvasHandle } from './components/ViewerCanvas';
+export { MapLoader } from './components/MapLoader';
+export type { MapLoaderProps } from './components/MapLoader';

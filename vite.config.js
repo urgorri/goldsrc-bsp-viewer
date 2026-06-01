@@ -10,9 +10,9 @@ export default defineConfig({
         tailwindcss(),
         dts({
             include: ['src'],
-            exclude: ['src/main.tsx', 'src/App.tsx', 'src/components/MapLoader.tsx'],
+            exclude: ['src/main.tsx', 'src/App.tsx'],
             insertTypesEntry: true,
-            entryRoot: 'src',
+            rollupTypes: true,
             tsconfigPath: resolve(__dirname, 'tsconfig.app.json'),
         })
     ],
