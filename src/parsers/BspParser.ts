@@ -96,6 +96,29 @@ export interface BspLeaf {
     ambientLevels: number[];
 }
 
+export interface BspEntity {
+    [key: string]: string;
+}
+
+export interface ParsedBsp {
+    version: number;
+    entities: BspEntity[];
+    vertices: Vector3[];
+    edges: BspEdge[];
+    surfEdges: number[];
+    faces: BspFace[];
+    texInfos: BspTexInfo[];
+    planes: any[];
+    textures: BspMiptex[];
+    lighting: Uint8Array;
+    visibility: Uint8Array;
+    models: BspModel[];
+    nodes: BspNode[];
+    leaves: BspLeaf[];
+    markSurfaces: number[];
+    clipNodes: any[];
+}
+
 export class BspParser {
     private view: DataView;
 
@@ -103,7 +126,7 @@ export class BspParser {
         this.view = new DataView(buffer);
     }
 
-    public parse(): any {
+    public parse(): ParsedBsp {
         const version = this.view.getInt32(0, true);
         if (version !== 30) {
             console.warn(`Unsupported BSP version: ${version}. Expected 30.`);
