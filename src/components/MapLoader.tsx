@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, CheckCircle2 } from 'lucide-react';
 
-interface MapLoaderProps {
+export interface MapLoaderProps {
     onLoad: (bsp: File, wads: File[], fgds: File[]) => void;
     status: string;
 }
