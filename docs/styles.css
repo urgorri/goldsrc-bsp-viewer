@@ -1,0 +1,265 @@
+:root {
+    --bg-color: #050505;
+    --panel-bg: rgba(20, 20, 20, 0.85);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --text-color: #f0f0f0;
+    --text-muted: #aaaaaa;
+    --accent-color: #3b82f6;
+    --accent-hover: #2563eb;
+    --success-color: #10b981;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-color);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text-color);
+}
+
+/* 3D Canvas Container */
+#viewer-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1; /* Below UI */
+}
+
+/* UI Overlay container */
+#ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Let clicks pass through empty space */
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 15px;
+    overflow-y: auto;
+}
+
+/* Let the children receive pointer events */
+#ui-overlay > * {
+    pointer-events: auto;
+}
+
+header {
+    margin-bottom: 5px;
+}
+
+header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+/* Panels */
+.panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    width: 320px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.panel h2 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    color: #fff;
+}
+
+/* Forms & Inputs */
+.input-group {
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.input-group label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+input[type="file"] {
+    font-size: 0.85rem;
+    padding: 5px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 5px;
+}
+
+button:hover {
+    background-color: var(--accent-hover);
+}
+
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    color: #888;
+}
+
+/* Status & Loading */
+.status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-header h2 {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+#status-text {
+    font-size: 0.9rem;
+    margin: 10px 0;
+    word-break: break-all;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background-color: rgba(0,0,0,0.5);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background-color: var(--success-color);
+    transition: width 0.1s ease-out;
+}
+
+/* Spinner */
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    display: none;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Entity Inspector */
+.inspector-panel {
+    max-height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.entity-classname {
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.entity-properties {
+    overflow-y: auto;
+    font-size: 0.85rem;
+    flex-grow: 1;
+}
+
+.property-row {
+    display: flex;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.property-key {
+    color: var(--text-muted);
+    width: 40%;
+    flex-shrink: 0;
+    padding-right: 10px;
+    word-break: break-all;
+}
+
+.property-value {
+    color: #fff;
+    width: 60%;
+    word-break: break-all;
+}
+
+/* Controls Cheat Sheet */
+.controls-panel ul {
+    list-style: none;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.controls-panel li {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+kbd {
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 3px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.2), 0 2px 0 0 rgba(255,255,255,0.1) inset;
+    color: #eee;
+    display: inline-block;
+    font-family: monospace;
+    font-size: 0.8em;
+    padding: 2px 6px;
+    margin: 0 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #ui-overlay {
+        padding: 10px;
+    }
+
+    .panel {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Optional: hide controls on very small screens to save space */
+    .controls-panel {
+        display: none;
+    }
+}
