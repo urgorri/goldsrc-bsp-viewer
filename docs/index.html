@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GoldSrc BSP Viewer - Showcase</title>
     <link rel="stylesheet" href="./styles.css">
+    <script>
+        // Polyfill for Node.js globals in the browser
+        window.global = window;
+        window.process = {
+            env: {
+                NODE_ENV: 'production'
+            }
+        };
+        window.Buffer = window.Buffer || [];
+    </script>
     <script type="importmap">
         {
             "imports": {
