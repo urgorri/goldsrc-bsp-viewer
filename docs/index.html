@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoldSrc BSP Viewer - Showcase</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="ui-overlay">
+        <header>
+            <h1>GoldSrc BSP Viewer</h1>
+        </header>
+
+        <div class="panel upload-panel">
+            <h2>Load Map</h2>
+            <div class="input-group">
+                <label for="bsp-input">Select .bsp file:</label>
+                <input type="file" id="bsp-input" accept=".bsp">
+            </div>
+
+            <div class="input-group">
+                <label for="wad-input">Select .wad files (optional):</label>
+                <input type="file" id="wad-input" accept=".wad" multiple>
+            </div>
+
+            <button id="load-btn">Load Map</button>
+        </div>
+
+        <div class="panel status-panel" id="status-panel" style="display: none;">
+            <div class="status-header">
+                <h2>Status</h2>
+                <div id="loading-spinner" class="spinner"></div>
+            </div>
+            <div id="status-text">Ready</div>
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+        </div>
+
+        <div class="panel inspector-panel" id="inspector-panel" style="display: none;">
+            <h2>Entity Inspector</h2>
+            <div id="entity-classname" class="entity-classname">No entity selected</div>
+            <div class="entity-properties" id="entity-properties">
+                <!-- Key-value pairs will be injected here -->
+            </div>
+        </div>
+
+        <div class="panel controls-panel">
+            <h2>Controls</h2>
+            <ul>
+                <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> - Move</li>
+                <li><kbd>Mouse</kbd> - Look around</li>
+                <li><kbd>Click</kbd> - Lock mouse</li>
+                <li><kbd>ESC</kbd> - Unlock mouse</li>
+                <li><kbd>Left Click</kbd> on entity - Select</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="viewer-container"></div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
