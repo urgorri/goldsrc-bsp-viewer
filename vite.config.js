@@ -20,7 +20,11 @@ export default defineConfig({
         lib: {
             entry: resolve(__dirname, 'src/index.ts'),
             name: 'GoldSrcBspViewer',
-            fileName: 'goldsrc-bsp-viewer',
+            fileName: function (format, entryName) {
+                if (format === 'es')
+                    return 'goldsrc-bsp-viewer.js';
+                return "goldsrc-bsp-viewer.".concat(format, ".cjs");
+            },
             formats: ['es', 'umd']
         },
         rollupOptions: {
