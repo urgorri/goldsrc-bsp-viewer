@@ -20,6 +20,7 @@ export class MapRenderer {
     private lightmapAtlas: THREE.Texture | null = null;
     private materialCache: Map<string, THREE.ShaderMaterial> = new Map();
     private atlasWidth = 2048;
+    private pickableObjects: THREE.Object3D[] = [];
     private atlasHeight = 2048;
     private faceLightmapInfo: Map<number, { x: number, y: number, w: number, h: number, minU_step: number, minV_step: number, step: number }> = new Map();
     private currentLeafIdx: number = -1;
@@ -43,6 +44,7 @@ export class MapRenderer {
 
     public dispose() {
         this.cleanup();
+        this.pickableObjects = [];
     }
 
     private cleanup() {
@@ -138,11 +140,24 @@ export class MapRenderer {
         this.onProgress?.(90, "Rendering Entities...");
         this.entitiesGroup = this.entityRenderer.renderEntities(this.bsp.entities);
 
+        this.updatePickableObjects();
+
         this.calculateEntityCenters();
         this.drawOriginAxes();
         this.renderConnections();
 
         this.onProgress?.(100, "Ready");
+    }
+
+    private updatePickableObjects() {
+        this.pickableObjects = [];
+        if (this.worldGroup) this.pickableObjects.push(this.worldGroup);
+        if (this.brushEntitiesGroup) this.pickableObjects.push(this.brushEntitiesGroup);
+        if (this.entitiesGroup) this.pickableObjects.push(this.entitiesGroup);
+    }
+
+    public getPickableObjects(): THREE.Object3D[] {
+        return this.pickableObjects;
     }
 
     private calculateEntityCenters() {
