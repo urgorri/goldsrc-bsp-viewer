@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('viewer-container');
     const bspInput = document.getElementById('bsp-input');
     const wadInput = document.getElementById('wad-input');
+    const fgdInput = document.getElementById('fgd-input');
     const loadBtn = document.getElementById('load-btn');
 
     const statusPanel = document.getElementById('status-panel');
@@ -19,14 +20,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const entityClassname = document.getElementById('entity-classname');
     const entityProperties = document.getElementById('entity-properties');
 
+    // Settings Panel Elements
+    const texFilterSelect = document.getElementById('texture-filtering');
+    const lightmapFilterCheck = document.getElementById('lightmap-filtering');
+    const showBrushCheck = document.getElementById('show-brush-entities');
+    const showWireframesCheck = document.getElementById('show-wireframes');
+    const showAxesCheck = document.getElementById('show-axes');
+    const opacitySlider = document.getElementById('aaa-trigger-opacity');
+    const opacityValSpan = document.getElementById('aaa-trigger-opacity-val');
+
     // Initialize Viewer
     let viewer;
     try {
         viewer = new BspViewer({
             container: container,
             antialias: true,
-            showAxes: true,
-            backgroundColor: 0x050505
+            showAxes: showAxesCheck.checked,
+            backgroundColor: 0x050505,
+            textureFiltering: texFilterSelect.value === 'true',
+            lightmapFiltering: lightmapFilterCheck.checked,
+            showBrushEntities: showBrushCheck.checked,
+            showBrushWireframes: showWireframesCheck.checked,
+            aaaTriggerOpacity: parseFloat(opacitySlider.value)
         });
     } catch (err) {
         console.error("Failed to initialize BspViewer:", err);
@@ -92,6 +107,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- Settings UI Event Listeners ---
+
+    texFilterSelect.addEventListener('change', (e) => {
+        viewer.setOptions({ textureFiltering: e.target.value === 'true' });
+    });
+
+    lightmapFilterCheck.addEventListener('change', (e) => {
+        viewer.setOptions({ lightmapFiltering: e.target.checked });
+    });
+
+    showBrushCheck.addEventListener('change', (e) => {
+        viewer.setOptions({ showBrushEntities: e.target.checked });
+    });
+
+    showWireframesCheck.addEventListener('change', (e) => {
+        viewer.setOptions({ showBrushWireframes: e.target.checked });
+    });
+
+    showAxesCheck.addEventListener('change', (e) => {
+        viewer.setOptions({ showAxes: e.target.checked });
+    });
+
+    opacitySlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        opacityValSpan.innerText = val.toFixed(1);
+        viewer.setOptions({ aaaTriggerOpacity: val });
+    });
+
     // --- File Loading Logic ---
 
     // Helper function to read a File object as an ArrayBuffer
@@ -101,6 +144,16 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onload = () => resolve(reader.result);
             reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
             reader.readAsArrayBuffer(file);
+        });
+    };
+
+    // Helper function to read a File object as Text
+    const readFileAsText = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
+            reader.readAsText(file);
         });
     };
 
@@ -137,9 +190,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // 3. Pass buffers to the viewer
+            // 3. Read the FGD file (if any)
+            let fgdText = undefined;
+            if (fgdInput.files && fgdInput.files.length > 0) {
+                fgdText = await readFileAsText(fgdInput.files[0]);
+            }
+
+            // 4. Pass buffers and text to the viewer
             statusText.innerText = 'Parsing map data...';
-            await viewer.loadMap(bspBuffer, wadBuffers);
+            await viewer.loadMap(bspBuffer, wadBuffers, fgdText);
 
             statusText.innerText = 'Map loaded successfully. Click canvas to start.';
             progressBar.style.width = '100%';
