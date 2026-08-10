@@ -8,7 +8,7 @@ function App() {
   const [status, setStatus] = useState("Waiting for map...");
   const [loadProgress, setLoadProgress] = useState({ percent: 0, message: "" });
   const [isLoading, setIsLoading] = useState(false);
-  const pvsEnabled = false;
+  const [pvsEnabled, setPvsEnabled] = useState(false);
   const [showPointEntities, setShowPointEntities] = useState(true);
   const [showBrushEntities, setShowBrushEntities] = useState(true);
   const [showBrushWireframes, setShowBrushWireframes] = useState(true);
@@ -24,6 +24,7 @@ function App() {
 
   // Temporary local state for settings dropdown
   const [localSettings, setLocalSettings] = useState({
+    pvsEnabled,
     showPointEntities,
     showBrushEntities,
     showBrushWireframes,
@@ -36,6 +37,7 @@ function App() {
 
   useEffect(() => {
     setLocalSettings({
+      pvsEnabled,
       showPointEntities,
       showBrushEntities,
       showBrushWireframes,
@@ -45,7 +47,7 @@ function App() {
       textureFiltering,
       lightmapFiltering
     });
-  }, [showPointEntities, showBrushEntities, showBrushWireframes, showAxes, aaaTriggerOpacity, entityConnectionsMode, textureFiltering, lightmapFiltering]);
+  }, [pvsEnabled, showPointEntities, showBrushEntities, showBrushWireframes, showAxes, aaaTriggerOpacity, entityConnectionsMode, textureFiltering, lightmapFiltering]);
 
   const handleLoadMap = async (bsp: File, wads: File[], fgds: File[]) => {
     if (viewerRef.current) {
@@ -122,6 +124,15 @@ function App() {
                   <h3 className="text-[10px] font-black text-white uppercase tracking-widest">Global Settings</h3>
                 </div>
                 <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                  <label className="flex items-center justify-between group cursor-pointer">
+                    <span className="text-[10px] font-bold text-zinc-400 group-hover:text-zinc-200 transition-colors uppercase tracking-tight">Enable PVS</span>
+                    <input
+                      type="checkbox"
+                      checked={localSettings.pvsEnabled}
+                      onChange={(e) => setLocalSettings({ ...localSettings, pvsEnabled: e.target.checked })}
+                      className="w-3.5 h-3.5 rounded border-zinc-700 bg-zinc-900 text-blue-600 focus:ring-0 focus:ring-offset-0"
+                    />
+                  </label>
                   <label className="flex items-center justify-between group cursor-pointer">
                     <span className="text-[10px] font-bold text-zinc-400 group-hover:text-zinc-200 transition-colors uppercase tracking-tight">Texture Filtering</span>
                     <input
@@ -209,6 +220,7 @@ function App() {
                 <div className="p-2 bg-white/5 border-t border-white/5">
                   <button
                     onClick={() => {
+                      setPvsEnabled(localSettings.pvsEnabled);
                       setTextureFiltering(localSettings.textureFiltering);
                       setLightmapFiltering(localSettings.lightmapFiltering);
                       setShowBrushEntities(localSettings.showBrushEntities);
