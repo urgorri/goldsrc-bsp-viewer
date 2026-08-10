@@ -99,6 +99,46 @@ header h1 {
     color: var(--text-muted);
 }
 
+.checkbox-group {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkbox-group label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-color);
+}
+
+select {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    padding: 5px;
+    font-size: 0.85rem;
+    outline: none;
+}
+
+select:focus {
+    border-color: var(--accent-color);
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent-color);
+    cursor: pointer;
+}
+
 input[type="file"] {
     font-size: 0.85rem;
     padding: 5px;
