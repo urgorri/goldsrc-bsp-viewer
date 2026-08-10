@@ -11,7 +11,7 @@ export class FgdParser {
         // Simple regex-based parsing for colors and class names
         // Example: @PointClass base(Targetname, Target) color(0 255 0) size(-8 -8 -8, 8 8 8) = info_player_start : "Player start" []
 
-        const classRegex = /@(\w+Class).*?=\s*(\w+)/g;
+        const classRegex = /@(\w+Class)[^=]*=\s*(\w+)/g;
         let match;
 
         while ((match = classRegex.exec(text)) !== null) {
