@@ -2,9 +2,17 @@ import * as THREE from 'three';
 
 export class PvsManager {
     private bsp: any;
+    private allLeaves: number[] | null = null;
 
     constructor(bsp: any) {
         this.bsp = bsp;
+    }
+
+    private getAllLeaves(): number[] {
+        if (this.allLeaves === null) {
+            this.allLeaves = Array.from({ length: this.bsp.leaves.length }, (_, i) => i);
+        }
+        return this.allLeaves;
     }
 
     public getLeafIndex(cameraPosition: THREE.Vector3): number {
@@ -15,12 +23,12 @@ export class PvsManager {
         // If leafIdx <= 0, we are either in solid space or out of bounds.
         // Instead of hiding everything, let's show all leafs or at least return a safe fallback.
         if (leafIdx <= 0) {
-            return Array.from({ length: this.bsp.leaves.length }, (_, i) => i);
+            return this.getAllLeaves();
         }
 
         const leaf = this.bsp.leaves[leafIdx];
         if (!leaf || leaf.visOffset === -1) {
-            return Array.from({ length: this.bsp.leaves.length }, (_, i) => i);
+            return this.getAllLeaves();
         }
 
         return this.decompressVis(leaf.visOffset);
