@@ -26,12 +26,21 @@ export function generateFaceGeometry(
 
     if (numEdges < 3) return null;
 
-    const faceVerts: THREE.Vector3[] = [];
+    const faceVerts: { pos: THREE.Vector3, u: number, v_tex: number }[] = [];
     for (let i = 0; i < numEdges; i++) {
         const surfEdge = bsp.surfEdges[firstEdge + i];
         const edge = bsp.edges[Math.abs(surfEdge)];
         const vIdx = surfEdge >= 0 ? edge.v[0] : edge.v[1];
-        faceVerts.push(convertVector(bsp.vertices[vIdx]));
+
+        const origV = bsp.vertices[vIdx];
+        const u = (origV.x * texInfo.s.x + origV.y * texInfo.s.y + origV.z * texInfo.s.z) + texInfo.shiftS;
+        const v_tex = (origV.x * texInfo.t.x + origV.y * texInfo.t.y + origV.z * texInfo.t.z) + texInfo.shiftT;
+
+        faceVerts.push({
+            pos: convertVector(origV),
+            u,
+            v_tex
+        });
     }
 
     // GoldSrc faces are wound in a way that might need reversing for Three.js
@@ -46,18 +55,6 @@ export function generateFaceGeometry(
     const uvs = new Float32Array(numVertices * 2);
     const lightUvs = new Float32Array(numVertices * 2);
 
-    let minU = Infinity, minV = Infinity;
-    if (atlasInfo) {
-        faceVerts.forEach(v => {
-            // Convert back to HL coordinates for UV calculation
-            const hlx = -v.z; const hly = -v.x; const hlz = v.y;
-            const u = (hlx * texInfo.s.x + hly * texInfo.s.y + hlz * texInfo.s.z) + texInfo.shiftS;
-            const v_tex = (hlx * texInfo.t.x + hly * texInfo.t.y + hlz * texInfo.t.z) + texInfo.shiftT;
-            minU = Math.min(minU, u);
-            minV = Math.min(minV, v_tex);
-        });
-    }
-
     let posIdx = 0;
     let uvIdx = 0;
 
@@ -70,25 +67,20 @@ export function generateFaceGeometry(
         const tris = [v0, v2, v1]; // Flipped winding from [v0, v1, v2]
 
         for (const v of tris) {
-            positions[posIdx++] = v.x;
-            positions[posIdx++] = v.y;
-            positions[posIdx++] = v.z;
-
-            // HL coordinates for UV
-            const hlx = -v.z; const hly = -v.x; const hlz = v.y;
-            const u = (hlx * texInfo.s.x + hly * texInfo.s.y + hlz * texInfo.s.z) + texInfo.shiftS;
-            const v_tex = (hlx * texInfo.t.x + hly * texInfo.t.y + hlz * texInfo.t.z) + texInfo.shiftT;
+            positions[posIdx++] = v.pos.x;
+            positions[posIdx++] = v.pos.y;
+            positions[posIdx++] = v.pos.z;
 
             // Normalized UVs. Ensure we don't divide by zero.
-            uvs[uvIdx] = u / (miptex.width || 1);
-            uvs[uvIdx + 1] = v_tex / (miptex.height || 1);
+            uvs[uvIdx] = v.u / (miptex.width || 1);
+            uvs[uvIdx + 1] = v.v_tex / (miptex.height || 1);
 
             if (atlasInfo) {
                 // In GoldSrc/HL, lightmap coordinates for a vertex are:
                 // luxel_u = (u / step) - floor(minU / step)
                 // We add 0.5 to center on the luxel, and +1 because of the 1px padding in our atlas.
-                const lu = (u / atlasInfo.step) - atlasInfo.minU_step + 0.5;
-                const lv = (v_tex / atlasInfo.step) - atlasInfo.minV_step + 0.5;
+                const lu = (v.u / atlasInfo.step) - atlasInfo.minU_step + 0.5;
+                const lv = (v.v_tex / atlasInfo.step) - atlasInfo.minV_step + 0.5;
 
                 // atlasInfo.x/y is the top-left of the PADDED area.
                 // The actual lightmap data starts at (x+1, y+1).
