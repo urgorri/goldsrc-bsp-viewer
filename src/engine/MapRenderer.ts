@@ -129,8 +129,6 @@ export class MapRenderer {
             this.onProgress?.(30 + (i / wadBuffers.length) * 20, `Loading textures... (${i+1}/${wadBuffers.length})`);
         }
 
-        console.log(`[MapRenderer] Total textures registered: ${this.textures.size}`);
-
         this.onProgress?.(60, "Generating Lightmaps...");
         this.generateLightmapAtlas();
 
