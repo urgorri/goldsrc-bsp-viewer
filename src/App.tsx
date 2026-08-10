@@ -59,7 +59,7 @@ function App() {
         setStatus("Map Loaded");
         setShowMapLoader(false);
         setIsLoading(false);
-      } catch (err) {
+      } catch {
         setStatus("Load Error");
         setIsLoading(false);
       }

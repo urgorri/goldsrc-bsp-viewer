@@ -92,6 +92,7 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
             viewer.destroy();
             viewerRef.current = null;
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [onEntitySelect, onLockChange, onProgress]);
 
     // Consolidate all configuration props into a single effect
