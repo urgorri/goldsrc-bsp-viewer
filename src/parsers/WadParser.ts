@@ -28,8 +28,6 @@ export class WadParser {
         const numEntries = this.view.getInt32(4, true);
         const dirOffset = this.view.getInt32(8, true);
 
-        console.log(`[WadParser] Parsing WAD with ${numEntries} entries`);
-
         const textures = new Map<string, WadEntry>();
 
         for (let i = 0; i < numEntries; i++) {
@@ -55,7 +53,6 @@ export class WadParser {
             }
         }
 
-        console.log(`[WadParser] Successfully loaded ${textures.size} textures`);
         return textures;
     }
 
