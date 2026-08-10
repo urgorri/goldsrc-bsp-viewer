@@ -24,12 +24,14 @@ export default defineConfig({
             formats: ['es', 'umd']
         },
         rollupOptions: {
-            external: ['three', 'react', 'react-dom'],
+            external: ['three', 'react', 'react-dom', 'react/jsx-runtime', 'lucide-react'],
             output: {
                 globals: {
                     three: 'THREE',
                     react: 'React',
-                    'react-dom': 'ReactDOM'
+                    'react-dom': 'ReactDOM',
+                    'react/jsx-runtime': 'jsxRuntime',
+                    'lucide-react': 'lucide'
                 }
             }
         }
