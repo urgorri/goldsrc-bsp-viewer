@@ -158,13 +158,7 @@ export class BspViewer {
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
 
-        const objectsToIntersect = this.scene.children.filter(obj =>
-            obj.name !== "entity_connections" &&
-            obj.name !== "selection_highlight" &&
-            obj.name !== "origin_axes"
-        );
-
-        const intersects = raycaster.intersectObjects(objectsToIntersect, true);
+        const intersects = raycaster.intersectObjects(this.mapRenderer.getPickableObjects(), true);
 
         if (intersects.length > 0) {
             const obj = intersects[0].object;
