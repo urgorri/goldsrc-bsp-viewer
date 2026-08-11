@@ -59,7 +59,8 @@ function App() {
         setStatus("Map Loaded");
         setShowMapLoader(false);
         setIsLoading(false);
-      } catch (err) {
+      } catch (err: unknown) {
+        console.error(err);
         setStatus("Load Error");
         setIsLoading(false);
       }

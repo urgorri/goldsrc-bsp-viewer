@@ -92,7 +92,21 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
             viewer.destroy();
             viewerRef.current = null;
         };
-    }, [onEntitySelect, onLockChange, onProgress]);
+    }, [
+        onEntitySelect,
+        onLockChange,
+        onProgress,
+        pvsEnabled,
+        showPointEntities,
+        showBrushEntities,
+        showBrushWireframes,
+        showAxes,
+        aaaTriggerOpacity,
+        entityConnectionsMode,
+        textureFiltering,
+        lightmapFiltering,
+        antialias
+    ]);
 
     // Consolidate all configuration props into a single effect
     useEffect(() => {
@@ -105,7 +119,8 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
             aaaTriggerOpacity,
             entityConnectionsMode,
             textureFiltering,
-            lightmapFiltering
+            lightmapFiltering,
+            antialias
         });
     }, [
         pvsEnabled,
@@ -116,7 +131,8 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
         aaaTriggerOpacity,
         entityConnectionsMode,
         textureFiltering,
-        lightmapFiltering
+        lightmapFiltering,
+        antialias
     ]);
 
     // Handle selectedEntity separately as it might be null or change frequently
