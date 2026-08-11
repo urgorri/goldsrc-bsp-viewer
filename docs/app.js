@@ -1,7 +1,7 @@
 // Import the BspViewer from the built library
 // We assume the user has built the library and dist folder is available at the root.
 // For GitHub pages, we can just point to the relative path of the built file.
-import { BspViewer } from './dist/goldsrc-bsp-viewer.js';
+import { BspViewer } from './goldsrc-bsp-viewer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
