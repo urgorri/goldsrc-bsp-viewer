@@ -14,12 +14,12 @@ export default defineConfig({
       exclude: ['src/main.tsx', 'src/App.tsx'],
       insertTypesEntry: true,
       rollupTypes: true,
-      tsconfigPath: resolve(__dirname, 'tsconfig.app.json'),
+      tsconfigPath: resolve(import.meta.dirname, 'tsconfig.app.json'),
     })
   ],
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: resolve(import.meta.dirname, 'src/index.ts'),
       name: 'GoldSrcBspViewer',
       fileName: (format) => {
         if (format === 'es') return 'goldsrc-bsp-viewer.js';
@@ -41,3 +41,4 @@ export default defineConfig({
     }
   }
 })
+

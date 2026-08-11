@@ -38,6 +38,7 @@ jobs:
           mkdir -p _site
           cp -r docs/. _site/
           cp -r dist _site/
+          touch _site/.nojekyll
           echo "--- Contents of _site ---"
           ls -la _site
           echo "--- Contents of _site/dist ---"
