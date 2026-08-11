@@ -56,8 +56,40 @@
             <button id="load-btn">Load Map</button>
         </div>
 
-        <div class="panel settings-panel" id="settings-panel">
-            <h2>Settings</h2>
+        <div id="toast-container"></div>
+
+        <div class="panel inspector-panel" id="inspector-panel" style="display: none;">
+            <h2>Entity Inspector</h2>
+            <div id="entity-classname" class="entity-classname">No entity selected</div>
+            <div class="entity-properties" id="entity-properties">
+                <!-- Key-value pairs will be injected here -->
+            </div>
+        </div>
+
+        <div class="panel controls-panel">
+            <h2>Controls</h2>
+            <ul>
+                <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> - Move</li>
+                <li><kbd>Mouse</kbd> - Look around</li>
+                <li><kbd>Click</kbd> - Lock mouse</li>
+                <li><kbd>ESC</kbd> - Unlock mouse</li>
+                <li><kbd>Left Click</kbd> on entity - Select</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="viewer-container"></div>
+
+    <button id="settings-fab" aria-label="Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </button>
+
+    <dialog id="settings-modal" class="modal">
+        <div class="modal-content panel">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button id="close-settings" class="close-btn">&times;</button>
+            </div>
 
             <div class="input-group">
                 <label for="texture-filtering">Texture Filtering:</label>
@@ -87,44 +119,22 @@
                 <label for="show-axes">Show Axes</label>
             </div>
 
+            <div class="checkbox-group">
+                <input type="checkbox" id="show-crosshair">
+                <label for="show-crosshair">Show Crosshair</label>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="auto-pointer-lock" checked>
+                <label for="auto-pointer-lock">Auto Pointer Lock</label>
+            </div>
+
             <div class="input-group">
                 <label for="aaa-trigger-opacity">AAATRIGGER Opacity: <span id="aaa-trigger-opacity-val">0.3</span></label>
                 <input type="range" id="aaa-trigger-opacity" min="0" max="1" step="0.1" value="0.3">
             </div>
         </div>
-
-        <div class="panel status-panel" id="status-panel" style="display: none;">
-            <div class="status-header">
-                <h2>Status</h2>
-                <div id="loading-spinner" class="spinner"></div>
-            </div>
-            <div id="status-text">Ready</div>
-            <div class="progress-bar-container">
-                <div id="progress-bar" class="progress-bar"></div>
-            </div>
-        </div>
-
-        <div class="panel inspector-panel" id="inspector-panel" style="display: none;">
-            <h2>Entity Inspector</h2>
-            <div id="entity-classname" class="entity-classname">No entity selected</div>
-            <div class="entity-properties" id="entity-properties">
-                <!-- Key-value pairs will be injected here -->
-            </div>
-        </div>
-
-        <div class="panel controls-panel">
-            <h2>Controls</h2>
-            <ul>
-                <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> - Move</li>
-                <li><kbd>Mouse</kbd> - Look around</li>
-                <li><kbd>Click</kbd> - Lock mouse</li>
-                <li><kbd>ESC</kbd> - Unlock mouse</li>
-                <li><kbd>Left Click</kbd> on entity - Select</li>
-            </ul>
-        </div>
-    </div>
-
-    <div id="viewer-container"></div>
+    </dialog>
 
     <script type="module" src="./app.js"></script>
 </body>

@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const fgdInput = document.getElementById('fgd-input');
     const loadBtn = document.getElementById('load-btn');
 
-    const statusPanel = document.getElementById('status-panel');
-    const statusText = document.getElementById('status-text');
-    const progressBar = document.getElementById('progress-bar');
-    const spinner = document.getElementById('loading-spinner');
+    const toastContainer = document.getElementById('toast-container');
+    const settingsFab = document.getElementById('settings-fab');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeSettingsBtn = document.getElementById('close-settings');
 
     const inspectorPanel = document.getElementById('inspector-panel');
     const entityClassname = document.getElementById('entity-classname');
@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const showBrushCheck = document.getElementById('show-brush-entities');
     const showWireframesCheck = document.getElementById('show-wireframes');
     const showAxesCheck = document.getElementById('show-axes');
+    const showCrosshairCheck = document.getElementById('show-crosshair');
+    const autoPointerLockCheck = document.getElementById('auto-pointer-lock');
     const opacitySlider = document.getElementById('aaa-trigger-opacity');
     const opacityValSpan = document.getElementById('aaa-trigger-opacity-val');
 
@@ -41,6 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
             lightmapFiltering: lightmapFilterCheck.checked,
             showBrushEntities: showBrushCheck.checked,
             showBrushWireframes: showWireframesCheck.checked,
+            showCrosshair: showCrosshairCheck.checked,
+            autoPointerLock: autoPointerLockCheck.checked,
             aaaTriggerOpacity: parseFloat(opacitySlider.value)
         });
     } catch (err) {
@@ -49,23 +53,102 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // --- Toast Notification Manager ---
+
+    let currentLoadingToast = null;
+
+    const showToast = (title, message, isError = false, progress = -1) => {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+
+        const header = document.createElement('div');
+        header.className = 'toast-header';
+
+        const titleEl = document.createElement('h3');
+        titleEl.innerText = title;
+        header.appendChild(titleEl);
+
+        if (progress >= 0 && progress < 100) {
+            const spinner = document.createElement('div');
+            spinner.className = 'spinner';
+            header.appendChild(spinner);
+        }
+
+        const textEl = document.createElement('div');
+        textEl.className = 'toast-text';
+        textEl.innerText = message;
+
+        toast.appendChild(header);
+        toast.appendChild(textEl);
+
+        let progressContainer, progressBar;
+        if (progress >= 0) {
+            progressContainer = document.createElement('div');
+            progressContainer.className = 'toast-progress-container';
+
+            progressBar = document.createElement('div');
+            progressBar.className = 'toast-progress-bar';
+            if (isError) progressBar.classList.add('error');
+            progressBar.style.width = `${progress}%`;
+
+            progressContainer.appendChild(progressBar);
+            toast.appendChild(progressContainer);
+        }
+
+        toastContainer.appendChild(toast);
+
+        // Auto dismiss if it's an error or completion toast (progress 100 or -1)
+        if (isError || progress === 100 || progress === -1) {
+            if (progress === 100 && progressBar) {
+                progressBar.classList.add('success');
+            }
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                setTimeout(() => toast.remove(), 300); // Wait for fade-out animation
+            }, 3000);
+        }
+
+        return {
+            element: toast,
+            update: (newMessage, newProgress, newIsError = false) => {
+                textEl.innerText = newMessage;
+                if (progressBar) {
+                    progressBar.style.width = `${newProgress}%`;
+                    if (newIsError) {
+                        progressBar.classList.add('error');
+                        progressBar.classList.remove('success');
+                    } else if (newProgress === 100) {
+                        progressBar.classList.add('success');
+                        progressBar.classList.remove('error');
+                    }
+                }
+
+                // Remove spinner on completion/error
+                if (newProgress === 100 || newIsError) {
+                    const spinner = header.querySelector('.spinner');
+                    if (spinner) spinner.remove();
+
+                    // Auto dismiss
+                    setTimeout(() => {
+                        toast.classList.add('fade-out');
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+                }
+            }
+        };
+    };
+
     // --- Event Listeners for the Viewer ---
 
     // Handle Progress Events
     viewer.addEventListener('progress', (data) => {
-        // Show status panel if hidden
-        if (statusPanel.style.display === 'none') {
-            statusPanel.style.display = 'block';
-        }
-
-        statusText.innerText = data.message;
-        progressBar.style.width = `${data.percent}%`;
-
-        // Show/hide spinner based on completion
-        if (data.percent < 100) {
-            spinner.style.display = 'block';
+        if (!currentLoadingToast) {
+            currentLoadingToast = showToast('Status', data.message, false, data.percent);
         } else {
-            spinner.style.display = 'none';
+            currentLoadingToast.update(data.message, data.percent);
+            if (data.percent === 100) {
+                currentLoadingToast = null; // Clear reference once done
+            }
         }
     });
 
@@ -109,6 +192,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Settings UI Event Listeners ---
 
+    settingsFab.addEventListener('click', () => {
+        settingsModal.showModal();
+    });
+
+    closeSettingsBtn.addEventListener('click', () => {
+        settingsModal.close();
+    });
+
+    // Close modal when clicking outside
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+            settingsModal.close();
+        }
+    });
+
     texFilterSelect.addEventListener('change', (e) => {
         viewer.setOptions({ textureFiltering: e.target.value === 'true' });
     });
@@ -127,6 +225,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     showAxesCheck.addEventListener('change', (e) => {
         viewer.setOptions({ showAxes: e.target.checked });
+    });
+
+    showCrosshairCheck.addEventListener('change', (e) => {
+        viewer.setOptions({ showCrosshair: e.target.checked });
+    });
+
+    autoPointerLockCheck.addEventListener('change', (e) => {
+        viewer.setOptions({ autoPointerLock: e.target.checked });
     });
 
     opacitySlider.addEventListener('input', (e) => {
@@ -172,10 +278,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Reset UI
         inspectorPanel.style.display = 'none';
-        statusPanel.style.display = 'block';
-        statusText.innerText = 'Reading files...';
-        progressBar.style.width = '0%';
-        spinner.style.display = 'block';
+
+        if (currentLoadingToast) {
+            currentLoadingToast.element.remove();
+        }
+        currentLoadingToast = showToast('Status', 'Reading files...', false, 0);
 
         try {
             // 1. Read the BSP file
@@ -197,27 +304,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 4. Pass buffers and text to the viewer
-            statusText.innerText = 'Parsing map data...';
+            currentLoadingToast.update('Parsing map data...', 50);
             await viewer.loadMap(bspBuffer, wadBuffers, fgdText);
 
-            statusText.innerText = 'Map loaded successfully. Click canvas to start.';
-            progressBar.style.width = '100%';
+            // Let the internal progress handler finish the toast, or if it doesn't emit 100%:
+            if (currentLoadingToast) {
+                currentLoadingToast.update('Map loaded successfully. Click canvas to start.', 100);
+                currentLoadingToast = null;
+            }
 
         } catch (err) {
             console.error("Error loading map:", err);
-            statusText.innerText = `Error: ${err.message}`;
-            progressBar.style.width = '0%';
-            progressBar.style.backgroundColor = 'red';
+            if (currentLoadingToast) {
+                currentLoadingToast.update(`Error: ${err.message}`, 100, true);
+                currentLoadingToast = null;
+            } else {
+                showToast('Error', err.message, true, 100);
+            }
         } finally {
             // Re-enable button
             loadBtn.disabled = false;
             loadBtn.innerText = 'Load Map';
-            spinner.style.display = 'none';
-
-            // reset progress bar color after a delay if it was error
-            setTimeout(() => {
-                 progressBar.style.backgroundColor = 'var(--success-color)';
-            }, 3000);
         }
     });
 

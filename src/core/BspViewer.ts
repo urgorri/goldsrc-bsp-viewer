@@ -22,6 +22,8 @@ export interface BspViewerOptions {
     textureFiltering?: boolean;
     lightmapFiltering?: boolean;
     antialias?: boolean;
+    showCrosshair?: boolean;
+    autoPointerLock?: boolean;
 }
 
 type EventCallback = (...args: any[]) => void;
@@ -39,9 +41,12 @@ export class BspViewer {
     private options: Required<BspViewerOptions>;
 
     private selectedEntity: BspEntity | null = null;
+    private crosshairElement: HTMLElement | null = null;
+    private mouse: THREE.Vector2 = new THREE.Vector2();
 
     private resizeObserver: ResizeObserver;
     private onClickBound: (e: MouseEvent) => void;
+    private onMouseMoveBound: (e: MouseEvent) => void;
 
     private eventListeners: Map<string, Set<EventCallback>> = new Map();
 
@@ -64,7 +69,9 @@ export class BspViewer {
             entityConnectionsMode: options.entityConnectionsMode ?? 'none',
             textureFiltering: options.textureFiltering ?? true,
             lightmapFiltering: options.lightmapFiltering ?? true,
-            antialias: options.antialias ?? true
+            antialias: options.antialias ?? true,
+            showCrosshair: options.showCrosshair ?? false,
+            autoPointerLock: options.autoPointerLock ?? true
         };
 
         this.scene = new THREE.Scene();
@@ -92,6 +99,7 @@ export class BspViewer {
         this.clock = new THREE.Clock();
 
         this.onClickBound = this.onClick.bind(this);
+        this.onMouseMoveBound = this.onMouseMove.bind(this);
 
         this.resizeObserver = new ResizeObserver(() => this.onResize());
         this.resizeObserver.observe(this.container);
@@ -105,20 +113,60 @@ export class BspViewer {
         // Add initial options-based listeners if they exist
         if (options.onEntitySelect) this.addEventListener('entitySelect', options.onEntitySelect);
         if (options.onLockChange) this.addEventListener('lockChange', options.onLockChange);
+
+        this.createCrosshair();
+    }
+
+    private createCrosshair() {
+        if (!this.crosshairElement) {
+            this.crosshairElement = document.createElement('div');
+            this.crosshairElement.innerText = '+';
+            this.crosshairElement.style.position = 'absolute';
+            this.crosshairElement.style.top = '50%';
+            this.crosshairElement.style.left = '50%';
+            this.crosshairElement.style.transform = 'translate(-50%, -50%)';
+            this.crosshairElement.style.color = 'white';
+            this.crosshairElement.style.fontSize = '24px';
+            this.crosshairElement.style.pointerEvents = 'none';
+            this.crosshairElement.style.userSelect = 'none';
+            this.crosshairElement.style.display = 'none'; // Hidden by default
+            this.container.appendChild(this.crosshairElement);
+        }
+    }
+
+    private updateCrosshairVisibility() {
+        if (this.crosshairElement) {
+            if (this.options.showCrosshair && this.controls.isLocked) {
+                this.crosshairElement.style.display = 'block';
+            } else {
+                this.crosshairElement.style.display = 'none';
+            }
+        }
     }
 
     private setupEventListeners() {
         this.controls.addEventListener('lock', () => {
             this.navigator.enabled = true;
+            this.updateCrosshairVisibility();
             this.emit('lockChange', true);
         });
 
         this.controls.addEventListener('unlock', () => {
             this.navigator.enabled = false;
+            this.updateCrosshairVisibility();
             this.emit('lockChange', false);
         });
 
         this.container.addEventListener('click', this.onClickBound);
+        this.container.addEventListener('mousemove', this.onMouseMoveBound);
+    }
+
+    private onMouseMove(event: MouseEvent) {
+        if (!this.controls.isLocked) {
+            const rect = this.container.getBoundingClientRect();
+            this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        }
     }
 
     private onResize() {
@@ -133,13 +181,21 @@ export class BspViewer {
 
     private onClick() {
         if (!this.controls.isLocked) {
-            try {
-                this.controls.lock();
-            } catch (err) {
-                console.warn("Pointer lock failed:", err);
+            if (this.options.autoPointerLock) {
+                this.lockPointer();
+            } else {
+                this.handlePicking();
             }
         } else {
             this.handlePicking();
+        }
+    }
+
+    public lockPointer() {
+        try {
+            this.controls.lock();
+        } catch (err) {
+            console.warn("Pointer lock failed:", err);
         }
     }
 
@@ -156,7 +212,12 @@ export class BspViewer {
 
     private handlePicking() {
         const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+
+        if (this.controls.isLocked) {
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+        } else {
+            raycaster.setFromCamera(this.mouse, this.camera);
+        }
 
         const intersects = raycaster.intersectObjects(this.mapRenderer.getPickableObjects(), true);
 
@@ -209,6 +270,7 @@ export class BspViewer {
         cancelAnimationFrame(this.requestRef);
         this.resizeObserver.disconnect();
         this.container.removeEventListener('click', this.onClickBound);
+        this.container.removeEventListener('mousemove', this.onMouseMoveBound);
         this.controls.dispose();
         this.navigator.dispose();
         this.mapRenderer.dispose();
@@ -216,6 +278,11 @@ export class BspViewer {
 
         if (this.container.contains(this.renderer.domElement)) {
             this.container.removeChild(this.renderer.domElement);
+        }
+
+        if (this.crosshairElement && this.container.contains(this.crosshairElement)) {
+            this.container.removeChild(this.crosshairElement);
+            this.crosshairElement = null;
         }
 
         this.eventListeners.clear();
@@ -248,6 +315,10 @@ export class BspViewer {
 
         if (options.backgroundColor !== undefined) {
             this.scene.background = new THREE.Color(this.options.backgroundColor);
+        }
+
+        if (options.showCrosshair !== undefined) {
+            this.updateCrosshairVisibility();
         }
     }
 
