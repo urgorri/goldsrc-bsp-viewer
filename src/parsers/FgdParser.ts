@@ -23,12 +23,20 @@ export class FgdParser {
             const endIdx = text.indexOf('=', startIdx);
             const header = text.substring(startIdx, endIdx);
 
-            const colorMatch = header.match(/color\((\d+)\s+(\d+)\s+(\d+)\)/);
+            const colorMatch = header.match(/color\(\s*(\d+)\s+(\d+)\s+(\d+)\s*\)/);
             const color: [number, number, number] | undefined = colorMatch
                 ? [parseInt(colorMatch[1]), parseInt(colorMatch[2]), parseInt(colorMatch[3])]
                 : undefined;
 
-            classes.set(name, { name, type, color });
+            const sizeMatch = header.match(/size\(\s*(-?\d+)\s+(-?\d+)\s+(-?\d+)\s*,\s*(-?\d+)\s+(-?\d+)\s+(-?\d+)\s*\)/);
+            const size: [[number, number, number], [number, number, number]] | undefined = sizeMatch
+                ? [
+                    [parseInt(sizeMatch[1]), parseInt(sizeMatch[2]), parseInt(sizeMatch[3])],
+                    [parseInt(sizeMatch[4]), parseInt(sizeMatch[5]), parseInt(sizeMatch[6])]
+                  ]
+                : undefined;
+
+            classes.set(name, { name, type, color, size });
         }
 
         return classes;
