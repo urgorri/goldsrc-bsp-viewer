@@ -15,6 +15,8 @@ interface ViewerCanvasProps {
     textureFiltering: boolean;
     lightmapFiltering: boolean;
     antialias?: boolean;
+    showCrosshair?: boolean;
+    autoPointerLock?: boolean;
     selectedEntity: BspEntity | null;
     onProgress?: (percent: number, message: string) => void;
 }
@@ -38,6 +40,8 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
     textureFiltering,
     lightmapFiltering,
     antialias,
+    showCrosshair,
+    autoPointerLock,
     selectedEntity,
     onProgress
 }, ref) => {
@@ -83,7 +87,9 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
             entityConnectionsMode,
             textureFiltering,
             lightmapFiltering,
-            antialias
+            antialias,
+            showCrosshair,
+            autoPointerLock
         });
 
         viewerRef.current = viewer;
@@ -105,7 +111,9 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
         entityConnectionsMode,
         textureFiltering,
         lightmapFiltering,
-        antialias
+        antialias,
+        showCrosshair,
+        autoPointerLock
     ]);
 
     // Consolidate all configuration props into a single effect
@@ -120,7 +128,9 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
             entityConnectionsMode,
             textureFiltering,
             lightmapFiltering,
-            antialias
+            antialias,
+            showCrosshair,
+            autoPointerLock
         });
     }, [
         pvsEnabled,
@@ -132,7 +142,9 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
         entityConnectionsMode,
         textureFiltering,
         lightmapFiltering,
-        antialias
+        antialias,
+        showCrosshair,
+        autoPointerLock
     ]);
 
     // Handle selectedEntity separately as it might be null or change frequently
