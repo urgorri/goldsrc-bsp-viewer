@@ -328,6 +328,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- Pre-load default map resources ---
+    const preloadDefaultFiles = async () => {
+        try {
+            // Fetch default resources
+            const bspResponse = await fetch('./resources/c1a2d.bsp');
+            const decalsResponse = await fetch('./resources/decals.wad');
+            const halflifeResponse = await fetch('./resources/halflife.wad');
+            const xenoResponse = await fetch('./resources/xeno.wad');
+
+            if (!bspResponse.ok || !decalsResponse.ok || !halflifeResponse.ok || !xenoResponse.ok) {
+                console.warn("Could not fetch one or more default resources. Skipping preload.");
+                return;
+            }
+
+            const bspBlob = await bspResponse.blob();
+            const decalsBlob = await decalsResponse.blob();
+            const halflifeBlob = await halflifeResponse.blob();
+            const xenoBlob = await xenoResponse.blob();
+
+            // Create File objects
+            const bspFile = new File([bspBlob], 'c1a2d.bsp', { type: '' });
+            const decalsFile = new File([decalsBlob], 'decals.wad', { type: '' });
+            const halflifeFile = new File([halflifeBlob], 'halflife.wad', { type: '' });
+            const xenoFile = new File([xenoBlob], 'xeno.wad', { type: '' });
+
+            // Assign to inputs using DataTransfer
+            const bspDataTransfer = new DataTransfer();
+            bspDataTransfer.items.add(bspFile);
+            bspInput.files = bspDataTransfer.files;
+
+            const wadDataTransfer = new DataTransfer();
+            wadDataTransfer.items.add(decalsFile);
+            wadDataTransfer.items.add(halflifeFile);
+            wadDataTransfer.items.add(xenoFile);
+            wadInput.files = wadDataTransfer.files;
+
+            // Trigger load
+            loadBtn.click();
+        } catch (err) {
+            console.error("Error preloading default files:", err);
+        }
+    };
+
+    // Call preload on initialization
+    preloadDefaultFiles();
+
     // --- Window Resize Handling ---
     // The BspViewer uses ResizeObserver internally on the container,
     // so explicit window resize event listener isn't strictly necessary for the viewer itself,
