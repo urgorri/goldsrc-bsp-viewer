@@ -692,6 +692,7 @@ export class MapRenderer {
                              obj.material.uniforms.opacity.value = this.aaaTriggerOpacity;
                              obj.material.transparent = this.aaaTriggerOpacity < 1.0;
                              obj.material.depthWrite = this.aaaTriggerOpacity >= 1.0;
+                             obj.material.needsUpdate = true;
                         }
                     }
                 }

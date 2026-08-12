@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showBrushWireframes: showWireframesCheck.checked,
             showCrosshair: showCrosshairCheck.checked,
             autoPointerLock: autoPointerLockCheck.checked,
-            aaaTriggerOpacity: parseFloat(opacitySlider.value)
+        aaaTriggerOpacity: parseInt(opacitySlider.value, 10)
         });
     } catch (err) {
         console.error("Failed to initialize BspViewer:", err);
@@ -236,8 +236,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     opacitySlider.addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
-        opacityValSpan.innerText = val.toFixed(1);
+        const val = parseInt(e.target.value, 10);
+        opacityValSpan.innerText = val.toString();
         viewer.setOptions({ aaaTriggerOpacity: val });
     });
 
