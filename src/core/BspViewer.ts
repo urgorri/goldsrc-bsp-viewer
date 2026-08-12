@@ -136,7 +136,7 @@ export class BspViewer {
 
     private updateCrosshairVisibility() {
         if (this.crosshairElement) {
-            if (this.options.showCrosshair && this.controls.isLocked) {
+            if (this.options.showCrosshair) {
                 this.crosshairElement.style.display = 'block';
             } else {
                 this.crosshairElement.style.display = 'none';
