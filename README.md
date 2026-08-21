@@ -3,7 +3,7 @@
 [![CI](https://github.com/urgorri/goldsrc-bsp-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/urgorri/goldsrc-bsp-viewer/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen.svg?style=flat&logo=github)](https://urgorri.github.io/goldsrc-bsp-viewer/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/urgorri/goldsrc-bsp-viewer/releases)
+[![Version](https://img.shields.io/badge/version-1.1.1-blue.svg)](https://github.com/urgorri/goldsrc-bsp-viewer/releases)
 
 A high-performance, framework-agnostic GoldSrc (Half-Life 1) BSP map viewer library built with **Three.js**. It includes full map rendering, WAD3 texture loading, lightmaps, entity parsing, FGD metadata support, and an optional **React** wrapper component (`ViewerCanvas`) for seamless UI integration.
 

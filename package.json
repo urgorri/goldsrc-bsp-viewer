@@ -1,7 +1,7 @@
 {
   "name": "goldsrc-bsp-viewer",
   "private": false,
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "High-performance, framework-agnostic GoldSrc (Half-Life) BSP map viewer library built with Three.js and optional React support.",
   "type": "module",
   "sideEffects": false,
