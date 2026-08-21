@@ -158,7 +158,13 @@ Detailed release updates and changes can be found in the [CHANGELOG.md](CHANGELO
 
 ## 📄 License
 
-This library is licensed under the [MIT License](LICENSE).
+This library's source code is licensed under the [MIT License](LICENSE).
+
+## ⚖️ Asset Disclaimer & Copyright Notice
+
+All sample game assets included in this repository and showcased in the live demo—including map files (`c1a2d.bsp`), texture archives (`halflife.wad`, `xeno.wad`, `decals.wad`), and game definitions (`halflife.fgd`)—are the intellectual property and copyright of **Valve Corporation** (Copyright © 1998–2026 Valve Corporation).
+
+Half-Life is a registered trademark of Valve Corporation. These assets are bundled strictly for non-commercial educational, demonstration, and compatibility testing purposes. This project is fan-made and is not affiliated with, endorsed by, or sponsored by Valve Corporation.
 
 ## 👤 Author
 

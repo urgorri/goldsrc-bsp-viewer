@@ -20,6 +20,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const entityClassname = document.getElementById('entity-classname');
     const entityProperties = document.getElementById('entity-properties');
 
+    // Loading Overlay Elements
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingStatusText = document.getElementById('loading-status-text');
+    const loadingBarFill = document.getElementById('loading-bar-fill');
+
+    const updateLoadingOverlay = (statusMessage, percent) => {
+        if (loadingStatusText) loadingStatusText.innerText = statusMessage;
+        if (loadingBarFill) loadingBarFill.style.width = `${percent}%`;
+    };
+
+    const hideLoadingOverlay = () => {
+        if (loadingOverlay) {
+            loadingOverlay.classList.add('hidden');
+        }
+    };
+
+    const showLoadingOverlay = (statusMessage = 'Loading map assets...') => {
+        if (loadingOverlay) {
+            loadingOverlay.classList.remove('hidden');
+            updateLoadingOverlay(statusMessage, 0);
+        }
+    };
+
     // Settings Panel Elements
     const texFilterSelect = document.getElementById('texture-filtering');
     const lightmapFilterCheck = document.getElementById('lightmap-filtering');
@@ -45,10 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
             showBrushWireframes: showWireframesCheck.checked,
             showCrosshair: showCrosshairCheck.checked,
             autoPointerLock: autoPointerLockCheck.checked,
-        aaaTriggerOpacity: parseInt(opacitySlider.value, 10)
+            aaaTriggerOpacity: parseInt(opacitySlider.value, 10)
         });
     } catch (err) {
         console.error("Failed to initialize BspViewer:", err);
+        hideLoadingOverlay();
         alert("Failed to initialize the 3D viewer. Check console for details.");
         return;
     }
@@ -142,6 +166,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle Progress Events
     viewer.addEventListener('progress', (data) => {
+        updateLoadingOverlay(data.message, data.percent);
+        if (data.percent === 100) {
+            setTimeout(hideLoadingOverlay, 300);
+        }
+
         if (!currentLoadingToast) {
             currentLoadingToast = showToast('Status', data.message, false, data.percent);
         } else {
@@ -155,21 +184,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle Entity Selection Events
     viewer.addEventListener('entitySelect', (entity) => {
         if (!entity) {
-            // Hide or clear inspector if selection is cleared (if viewer supports clearing)
             inspectorPanel.style.display = 'none';
             return;
         }
 
-        // Show the panel
         inspectorPanel.style.display = 'flex';
-
-        // Update classname
         entityClassname.innerText = entity.classname || 'Unknown Entity';
-
-        // Clear old properties
         entityProperties.innerHTML = '';
 
-        // Populate new properties
         for (const [key, value] of Object.entries(entity)) {
             const row = document.createElement('div');
             row.className = 'property-row';
@@ -177,12 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const keyEl = document.createElement('div');
             keyEl.className = 'property-key';
             keyEl.innerText = key;
-            keyEl.title = key; // tooltip
+            keyEl.title = key;
 
             const valEl = document.createElement('div');
             valEl.className = 'property-value';
             valEl.innerText = value;
-            valEl.title = value; // tooltip
+            valEl.title = value;
 
             row.appendChild(keyEl);
             row.appendChild(valEl);
@@ -200,7 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsModal.close();
     });
 
-    // Close modal when clicking outside
     settingsModal.addEventListener('click', (e) => {
         if (e.target === settingsModal) {
             settingsModal.close();
@@ -243,7 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- File Loading Logic ---
 
-    // Helper function to read a File object as an ArrayBuffer
     const readFileAsArrayBuffer = (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -253,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Helper function to read a File object as Text
     const readFileAsText = (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -269,14 +288,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!bspFile) {
             alert("Please select a .bsp file to load.");
+            hideLoadingOverlay();
             return;
         }
 
-        // Disable button during load
+        showLoadingOverlay('Reading selected map files...');
         loadBtn.disabled = true;
         loadBtn.innerText = 'Loading...';
-
-        // Reset UI
         inspectorPanel.style.display = 'none';
 
         if (currentLoadingToast) {
@@ -285,10 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentLoadingToast = showToast('Status', 'Reading files...', false, 0);
 
         try {
-            // 1. Read the BSP file
             const bspBuffer = await readFileAsArrayBuffer(bspFile);
 
-            // 2. Read the WAD files (if any)
             const wadBuffers = [];
             if (wadInput.files && wadInput.files.length > 0) {
                 for (let i = 0; i < wadInput.files.length; i++) {
@@ -297,17 +313,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // 3. Read the FGD file (if any)
             let fgdText = undefined;
             if (fgdInput.files && fgdInput.files.length > 0) {
                 fgdText = await readFileAsText(fgdInput.files[0]);
             }
 
-            // 4. Pass buffers and text to the viewer
             currentLoadingToast.update('Parsing map data...', 50);
+            updateLoadingOverlay('Parsing map geometry & entities...', 50);
             await viewer.loadMap(bspBuffer, wadBuffers, fgdText);
 
-            // Let the internal progress handler finish the toast, or if it doesn't emit 100%:
             if (currentLoadingToast) {
                 currentLoadingToast.update('Map loaded successfully. Click canvas to start.', 100);
                 currentLoadingToast = null;
@@ -315,6 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (err) {
             console.error("Error loading map:", err);
+            hideLoadingOverlay();
             if (currentLoadingToast) {
                 currentLoadingToast.update(`Error: ${err.message}`, 100, true);
                 currentLoadingToast = null;
@@ -322,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Error', err.message, true, 100);
             }
         } finally {
-            // Re-enable button
             loadBtn.disabled = false;
             loadBtn.innerText = 'Load Map';
         }
@@ -330,30 +344,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Pre-load default map resources ---
     const preloadDefaultFiles = async () => {
+        showLoadingOverlay('Fetching Half-Life BSP map, WAD textures & FGD definitions...');
         try {
-            // Fetch default resources
             const bspResponse = await fetch('./resources/c1a2d.bsp');
             const decalsResponse = await fetch('./resources/decals.wad');
             const halflifeResponse = await fetch('./resources/halflife.wad');
             const xenoResponse = await fetch('./resources/xeno.wad');
+            const fgdResponse = await fetch('./resources/halflife.fgd');
 
-            if (!bspResponse.ok || !decalsResponse.ok || !halflifeResponse.ok || !xenoResponse.ok) {
+            if (!bspResponse.ok || !decalsResponse.ok || !halflifeResponse.ok || !xenoResponse.ok || !fgdResponse.ok) {
                 console.warn("Could not fetch one or more default resources. Skipping preload.");
+                hideLoadingOverlay();
                 return;
             }
+
+            updateLoadingOverlay('Processing default map assets & FGD...', 15);
 
             const bspBlob = await bspResponse.blob();
             const decalsBlob = await decalsResponse.blob();
             const halflifeBlob = await halflifeResponse.blob();
             const xenoBlob = await xenoResponse.blob();
+            const fgdBlob = await fgdResponse.blob();
 
-            // Create File objects
             const bspFile = new File([bspBlob], 'c1a2d.bsp', { type: '' });
             const decalsFile = new File([decalsBlob], 'decals.wad', { type: '' });
             const halflifeFile = new File([halflifeBlob], 'halflife.wad', { type: '' });
             const xenoFile = new File([xenoBlob], 'xeno.wad', { type: '' });
+            const fgdFile = new File([fgdBlob], 'halflife.fgd', { type: '' });
 
-            // Assign to inputs using DataTransfer
             const bspDataTransfer = new DataTransfer();
             bspDataTransfer.items.add(bspFile);
             bspInput.files = bspDataTransfer.files;
@@ -364,19 +382,16 @@ document.addEventListener('DOMContentLoaded', () => {
             wadDataTransfer.items.add(xenoFile);
             wadInput.files = wadDataTransfer.files;
 
-            // Trigger load
+            const fgdDataTransfer = new DataTransfer();
+            fgdDataTransfer.items.add(fgdFile);
+            fgdInput.files = fgdDataTransfer.files;
+
             loadBtn.click();
         } catch (err) {
             console.error("Error preloading default files:", err);
+            hideLoadingOverlay();
         }
     };
 
-    // Call preload on initialization
     preloadDefaultFiles();
-
-    // --- Window Resize Handling ---
-    // The BspViewer uses ResizeObserver internally on the container,
-    // so explicit window resize event listener isn't strictly necessary for the viewer itself,
-    // but it's good practice to ensure the container dimensions are correct if needed.
-    // The CSS absolute positioning handles the container size perfectly.
 });

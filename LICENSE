@@ -19,3 +19,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+### Third-Party Game Assets & Trademark Notice
+
+The source code of this library is licensed under the MIT License above.
+
+Sample map files (`c1a2d.bsp`), texture archives (`halflife.wad`, `xeno.wad`, `decals.wad`), and Forge Game Data definitions (`halflife.fgd`) included in this repository and showcase demo are copyright property of **Valve Corporation** (Copyright © 1998–2026 Valve Corporation). 
+
+Half-Life is a registered trademark of Valve Corporation. All third-party game assets are included strictly for non-commercial educational, demonstration, and compatibility testing purposes. This project is not affiliated with, endorsed by, or sponsored by Valve Corporation.
