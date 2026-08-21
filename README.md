@@ -1,7 +1,7 @@
 # GoldSrc BSP Viewer 🎮
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/urgorri/goldsrc-bsp-viewer/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/urgorri/goldsrc-bsp-viewer/releases)
 
 A high-performance, framework-agnostic GoldSrc (Half-Life) BSP map viewer library built with **Three.js**. It also includes an optional **React** wrapper for easy integration.
 
@@ -101,18 +101,17 @@ const viewer = new BspViewer({
 
 ### Loading Files
 
-You need to provide the files as `ArrayBuffer`. Here is a common pattern using `fetch`:
+You can load map files directly from URLs, HTML `File` objects, or raw `ArrayBuffer` instances:
 
 ```javascript
-async function loadMap(mapName) {
-    const bspResponse = await fetch(`/maps/${mapName}.bsp`);
-    const bspBuffer = await bspResponse.arrayBuffer();
+// 1. Load directly from URLs
+await viewer.loadMapFromUrls('/maps/c1a2d.bsp', ['/textures/halflife.wad']);
 
-    const wadResponse = await fetch(`/textures/halflife.wad`);
-    const wadBuffer = await wadResponse.arrayBuffer();
+// 2. Load from HTML File inputs / Drag & Drop
+await viewer.loadMapFromFiles(bspFile, wadFileList, fgdFileList);
 
-    await viewer.loadMap(bspBuffer, [wadBuffer]);
-}
+// 3. Load from raw ArrayBuffer
+await viewer.loadMap(bspBuffer, [wadBuffer1, wadBuffer2]);
 ```
 
 ### Event Handling

@@ -110,10 +110,6 @@ export class BspViewer {
         // Apply initial options
         this.applyOptions();
 
-        // Add initial options-based listeners if they exist
-        if (options.onEntitySelect) this.addEventListener('entitySelect', options.onEntitySelect);
-        if (options.onLockChange) this.addEventListener('lockChange', options.onLockChange);
-
         this.createCrosshair();
     }
 
@@ -255,10 +251,51 @@ export class BspViewer {
         }
     }
 
-    public async loadMap(bspBuffer: ArrayBuffer, wadBuffers: ArrayBuffer[], fgdText?: string) {
+    public async loadMap(bspBuffer: ArrayBuffer, wadBuffers: ArrayBuffer[] = [], fgdText?: string) {
         await this.mapRenderer.loadMap(bspBuffer, wadBuffers, fgdText);
         this.applyOptions();
         this.setSelectedEntity(this.selectedEntity);
+    }
+
+    public async loadMapFromFiles(bspFile: File, wadFiles: File[] = [], fgdFiles: File[] = []) {
+        const bspBuffer = await bspFile.arrayBuffer();
+        const wadBuffers: ArrayBuffer[] = await Promise.all(wadFiles.map(f => f.arrayBuffer()));
+        const fgdTexts = await Promise.all(fgdFiles.map(f => f.text()));
+        const combinedFgd = fgdTexts.length > 0 ? fgdTexts.join("\n") : undefined;
+        await this.loadMap(bspBuffer, wadBuffers, combinedFgd);
+    }
+
+    public async loadMapFromUrls(bspUrl: string, wadUrls: string[] = [], fgdUrl?: string) {
+        this.emit('progress', { percent: 5, message: 'Fetching map files...' });
+        const fetchBuffer = async (url: string) => {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.statusText}`);
+            return await res.arrayBuffer();
+        };
+
+        const bspBuffer = await fetchBuffer(bspUrl);
+        const wadBuffers = await Promise.all(wadUrls.map(url => fetchBuffer(url)));
+        let fgdText: string | undefined = undefined;
+        if (fgdUrl) {
+            const fgdRes = await fetch(fgdUrl);
+            if (fgdRes.ok) {
+                fgdText = await fgdRes.text();
+            }
+        }
+
+        await this.loadMap(bspBuffer, wadBuffers, fgdText);
+    }
+
+    public getSelectedEntity(): BspEntity | null {
+        return this.selectedEntity;
+    }
+
+    public getBsp() {
+        return this.mapRenderer.getBsp();
+    }
+
+    public getEntities(): BspEntity[] {
+        return this.mapRenderer.getEntities();
     }
 
     public resetView() {
@@ -307,6 +344,9 @@ export class BspViewer {
 
     private emit(event: string, ...args: any[]) {
         this.eventListeners.get(event)?.forEach(callback => callback(...args));
+        if (event === 'entitySelect') this.options.onEntitySelect?.(args[0]);
+        if (event === 'lockChange') this.options.onLockChange?.(args[0]);
+        if (event === 'progress') this.options.onProgress?.(args[0], args[1]);
     }
 
     public setOptions(options: Partial<BspViewerOptions>) {

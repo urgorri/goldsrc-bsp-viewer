@@ -17,4 +17,15 @@ describe('WadParser', () => {
 
         expect(() => parser.parse()).toThrow('Not a WAD3 file: WAD2');
     });
+
+    it('should return null for miptex with offset 0', () => {
+        const buffer = new ArrayBuffer(64);
+        const view = new DataView(buffer);
+        view.setUint32(16, 16, true); // width
+        view.setUint32(20, 16, true); // height
+        view.setUint32(24, 0, true);  // mipOffsets[0] = 0
+
+        const result = WadParser.parseMiptexFromBuffer(view, 0, 'test');
+        expect(result).toBeNull();
+    });
 });

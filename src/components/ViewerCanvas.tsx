@@ -53,12 +53,7 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
             if (!viewerRef.current) return;
 
             try {
-                const bspBuffer = await bspFile.arrayBuffer();
-                const wadBuffers: ArrayBuffer[] = await Promise.all(wadFiles.map(f => f.arrayBuffer()));
-                const fgdTexts = await Promise.all(fgdFiles.map(f => f.text()));
-                const combinedFgd = fgdTexts.join("\n");
-
-                await viewerRef.current.loadMap(bspBuffer, wadBuffers, combinedFgd);
+                await viewerRef.current.loadMapFromFiles(bspFile, wadFiles, fgdFiles);
             } catch (error) {
                 console.error("Load failed:", error);
                 throw error;
@@ -70,14 +65,24 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
         instance: viewerRef.current
     }));
 
+    const onEntitySelectRef = useRef(onEntitySelect);
+    const onLockChangeRef = useRef(onLockChange);
+    const onProgressRef = useRef(onProgress);
+
+    useEffect(() => {
+        onEntitySelectRef.current = onEntitySelect;
+        onLockChangeRef.current = onLockChange;
+        onProgressRef.current = onProgress;
+    }, [onEntitySelect, onLockChange, onProgress]);
+
     useEffect(() => {
         if (!containerRef.current) return;
 
         const viewer = new BspViewer({
             container: containerRef.current,
-            onEntitySelect,
-            onLockChange,
-            onProgress,
+            onEntitySelect: (ent) => onEntitySelectRef.current?.(ent),
+            onLockChange: (locked) => onLockChangeRef.current?.(locked),
+            onProgress: (pct, msg) => onProgressRef.current?.(pct, msg),
             showAxes,
             pvsEnabled,
             showPointEntities,
@@ -98,23 +103,8 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
             viewer.destroy();
             viewerRef.current = null;
         };
-    }, [
-        onEntitySelect,
-        onLockChange,
-        onProgress,
-        pvsEnabled,
-        showPointEntities,
-        showBrushEntities,
-        showBrushWireframes,
-        showAxes,
-        aaaTriggerOpacity,
-        entityConnectionsMode,
-        textureFiltering,
-        lightmapFiltering,
-        antialias,
-        showCrosshair,
-        autoPointerLock
-    ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [antialias]);
 
     // Consolidate all configuration props into a single effect
     useEffect(() => {
@@ -130,7 +120,10 @@ export const ViewerCanvas = forwardRef<ViewerCanvasHandle, ViewerCanvasProps>(({
             lightmapFiltering,
             antialias,
             showCrosshair,
-            autoPointerLock
+            autoPointerLock,
+            onEntitySelect: (ent) => onEntitySelectRef.current?.(ent),
+            onLockChange: (locked) => onLockChangeRef.current?.(locked),
+            onProgress: (pct, msg) => onProgressRef.current?.(pct, msg)
         });
     }, [
         pvsEnabled,

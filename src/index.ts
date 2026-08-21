@@ -5,6 +5,9 @@ export type { BspViewerOptions } from './core/BspViewer';
 // Engine (Low-level API)
 export { MapRenderer } from './engine/MapRenderer';
 export { Navigator } from './engine/Navigator';
+export { EntityRenderer } from './engine/EntityRenderer';
+export { PvsManager } from './engine/PvsManager';
+export { convertVector, generateFaceGeometry } from './engine/GeometryGenerator';
 
 // Parsers
 export { BspParser } from './parsers/BspParser';

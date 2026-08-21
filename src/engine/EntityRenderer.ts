@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { FgdParser } from '../parsers/FgdParser';
+import { convertVector } from './GeometryGenerator';
 
 export class EntityRenderer {
     private scene: THREE.Scene;
@@ -22,6 +23,7 @@ export class EntityRenderer {
             if (!ent.origin) return;
 
             const origin = ent.origin.split(' ').map(Number);
+            if (origin.length !== 3) return;
             const classname = ent.classname;
             const fgdClass = this.fgd.get(classname);
 
@@ -29,9 +31,7 @@ export class EntityRenderer {
                 new THREE.Color(fgdClass.color[0]/255, fgdClass.color[1]/255, fgdClass.color[2]/255) :
                 new THREE.Color(0x808080);
 
-            // HL Coordinates -> Three.js
-            // x -> -z, y -> -x, z -> y
-            const pos = new THREE.Vector3(-origin[1], origin[2], -origin[0]);
+            const pos = convertVector({ x: origin[0], y: origin[1], z: origin[2] });
 
             const geometry = new THREE.BoxGeometry(8, 8, 8);
             const material = new THREE.MeshBasicMaterial({

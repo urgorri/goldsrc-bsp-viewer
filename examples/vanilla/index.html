@@ -75,29 +75,15 @@
                     console.log('Mouse locked:', locked);
                 });
 
-                // 3. Load a map
-                // Replace these with actual URLs to your .bsp and .wad files
-                const bspUrl = '../../public/test.bsp'; // Adjust path as needed
-                const wadUrls = []; // Add your .wad URLs here
+                // 3. Load a map directly using helper method
+                const bspUrl = '../../c1a2d.bsp'; // Adjust path to your .bsp file
+                const wadUrls = []; // Add optional .wad URLs here
 
-                statusEl.innerText = 'Fetching map files...';
-
-                // Helper to fetch files as ArrayBuffer
-                const fetchBuffer = async (url) => {
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`Failed to fetch ${url}`);
-                    return await response.ok ? response.arrayBuffer() : null;
-                };
-
-                // In this example, we attempt to load a test map if it exists
                 try {
-                    const bspBuffer = await fetchBuffer(bspUrl);
-                    const wadBuffers = await Promise.all(wadUrls.map(url => fetchBuffer(url)));
-
-                    await viewer.loadMap(bspBuffer, wadBuffers);
+                    await viewer.loadMapFromUrls(bspUrl, wadUrls);
                     statusEl.innerText = 'Map Loaded. Click to explore.';
                 } catch (loadError) {
-                    console.warn('Could not load default map. Please provide your own files.', loadError);
+                    console.warn('Could not load default map. You can also call viewer.loadMap(bspBuffer) or viewer.loadMapFromFiles(file).', loadError);
                     statusEl.innerText = 'Ready. (No map loaded)';
                 }
 

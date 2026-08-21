@@ -97,6 +97,13 @@ export class MapRenderer {
             this.lightmapAtlas = null;
         }
 
+        this.connectionMaterials.yellow.dispose();
+        this.connectionMaterials.green.dispose();
+        this.connectionMaterials = {
+            yellow: new THREE.LineBasicMaterial({ color: 0xffff00, depthTest: true }),
+            green: new THREE.LineBasicMaterial({ color: 0x00ff00, depthTest: true })
+        };
+
         this.leafToMaterials.clear();
         this.faceLightmapInfo.clear();
         this.entityCenters.clear();
@@ -115,7 +122,7 @@ export class MapRenderer {
             await this.entityRenderer.loadFgd(fgdText);
         }
 
-        this.onProgress?.(30, "Parsing WADs...");
+        this.onProgress?.(30, "Parsing WADs & Embedded Textures...");
         for (let i = 0; i < wadBuffers.length; i++) {
             const wadBuffer = wadBuffers[i];
             try {
@@ -129,6 +136,29 @@ export class MapRenderer {
                 console.error("[MapRenderer] Failed to parse WAD", e);
             }
             this.onProgress?.(30 + (i / wadBuffers.length) * 20, `Loading textures... (${i+1}/${wadBuffers.length})`);
+        }
+
+        if (this.bsp.textures && this.bsp.textures.length > 0) {
+            const bspView = new DataView(bspBuffer);
+            const lumpTexturesOffset = bspView.getInt32(4 + 2 * 8, true);
+            if (lumpTexturesOffset > 0) {
+                for (let i = 0; i < this.bsp.textures.length; i++) {
+                    const mip = this.bsp.textures[i];
+                    if (!mip || !mip.name) continue;
+                    const texName = mip.name.toLowerCase();
+                    if (!this.textures.has(texName) && mip.offsets && mip.offsets[0] !== 0) {
+                        const offsetToMiptex = bspView.getInt32(lumpTexturesOffset + 4 + i * 4, true);
+                        if (offsetToMiptex !== -1) {
+                            const mipOff = lumpTexturesOffset + offsetToMiptex;
+                            const entry = WadParser.parseMiptexFromBuffer(bspView, mipOff, mip.name);
+                            if (entry) {
+                                const texture = this.createThreeTexture(entry);
+                                this.textures.set(texName, texture);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         this.onProgress?.(60, "Generating Lightmaps...");
@@ -158,6 +188,14 @@ export class MapRenderer {
 
     public getPickableObjects(): THREE.Object3D[] {
         return this.pickableObjects;
+    }
+
+    public getBsp(): ParsedBsp | null {
+        return this.bsp;
+    }
+
+    public getEntities(): BspEntity[] {
+        return this.bsp?.entities || [];
     }
 
     private calculateEntityCenters() {
@@ -832,7 +870,6 @@ export class MapRenderer {
         if (this.connectionsGroup) {
             this.connectionsGroup.traverse((child: any) => {
                 if (child.geometry) child.geometry.dispose();
-                if (child.material) child.material.dispose();
             });
             this.scene.remove(this.connectionsGroup);
             this.connectionsGroup = null;

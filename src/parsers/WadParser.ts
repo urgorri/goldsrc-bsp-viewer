@@ -56,34 +56,45 @@ export class WadParser {
         return textures;
     }
 
+    public static parseMiptexFromBuffer(view: DataView, offset: number, name: string): WadEntry | null {
+        try {
+            const width = view.getUint32(offset + 16, true);
+            const height = view.getUint32(offset + 20, true);
+
+            const mipOffsets = [
+                view.getUint32(offset + 24, true),
+                view.getUint32(offset + 28, true),
+                view.getUint32(offset + 32, true),
+                view.getUint32(offset + 36, true)
+            ];
+
+            if (mipOffsets[0] === 0) return null;
+
+            const mip3Size = Math.floor(width / 8) * Math.floor(height / 8);
+            const paletteOffsetStart = offset + mipOffsets[3] + mip3Size;
+
+            const palette = new Uint8Array(view.buffer, paletteOffsetStart + 2, 768);
+            const dataSize = width * height;
+            const data = new Uint8Array(view.buffer, offset + mipOffsets[0], dataSize);
+
+            return {
+                name,
+                width,
+                height,
+                data: new Uint8Array(data),
+                palette: new Uint8Array(palette)
+            };
+        } catch (e) {
+            console.warn(`[WadParser] Failed to parse miptex ${name} at offset ${offset}:`, e);
+            return null;
+        }
+    }
+
     private parseMiptex(offset: number, name: string): WadEntry {
-        const width = this.view.getUint32(offset + 16, true);
-        const height = this.view.getUint32(offset + 20, true);
-
-        const mipOffsets = [
-            this.view.getUint32(offset + 24, true),
-            this.view.getUint32(offset + 28, true),
-            this.view.getUint32(offset + 32, true),
-            this.view.getUint32(offset + 36, true)
-        ];
-
-        // The palette is 256 colors * 3 bytes (RGB)
-        // It's located after the last mipmap (mip3)
-        const mip3Size = (width / 8) * (height / 8);
-        const paletteOffsetStart = offset + mipOffsets[3] + mip3Size;
-        
-        // Skip 2 bytes (the number of colors, usually 256)
-        const palette = new Uint8Array(this.view.buffer, paletteOffsetStart + 2, 768);
-        
-        const dataSize = width * height;
-        const data = new Uint8Array(this.view.buffer, offset + mipOffsets[0], dataSize);
-
-        return {
-            name,
-            width,
-            height,
-            data: new Uint8Array(data),
-            palette: new Uint8Array(palette)
-        };
+        const entry = WadParser.parseMiptexFromBuffer(this.view, offset, name);
+        if (!entry) {
+            throw new Error(`Invalid miptex entry for ${name}`);
+        }
+        return entry;
     }
 }
