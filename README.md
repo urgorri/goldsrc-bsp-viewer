@@ -14,8 +14,6 @@ A high-performance, framework-agnostic GoldSrc (Half-Life 1) BSP map viewer libr
 Try the interactive showcase directly in your browser:  
 👉 **[https://urgorri.github.io/goldsrc-bsp-viewer/](https://urgorri.github.io/goldsrc-bsp-viewer/)**
 
-![GoldSrc BSP Viewer Demo 1](./resources/demo1.gif)
-
 ---
 
 ## 🚀 Quick Start (Vanilla JS)
