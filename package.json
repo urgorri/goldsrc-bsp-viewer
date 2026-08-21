@@ -2,6 +2,7 @@
   "name": "goldsrc-bsp-viewer",
   "private": false,
   "version": "1.1.0",
+  "description": "High-performance, framework-agnostic GoldSrc (Half-Life) BSP map viewer library built with Three.js and optional React support.",
   "type": "module",
   "sideEffects": false,
   "engines": {
@@ -16,7 +17,7 @@
   "bugs": {
     "url": "https://github.com/urgorri/goldsrc-bsp-viewer/issues"
   },
-  "homepage": "https://github.com/urgorri/goldsrc-bsp-viewer",
+  "homepage": "https://urgorri.github.io/goldsrc-bsp-viewer/",
   "main": "./dist/goldsrc-bsp-viewer.umd.cjs",
   "module": "./dist/goldsrc-bsp-viewer.js",
   "types": "./dist/index.d.ts",

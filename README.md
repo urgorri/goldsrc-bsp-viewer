@@ -1,13 +1,18 @@
 # GoldSrc BSP Viewer 🎮
 
+[![CI](https://github.com/urgorri/goldsrc-bsp-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/urgorri/goldsrc-bsp-viewer/actions/workflows/ci.yml)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen.svg?style=flat&logo=github)](https://urgorri.github.io/goldsrc-bsp-viewer/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/urgorri/goldsrc-bsp-viewer/releases)
 
-A high-performance, framework-agnostic GoldSrc (Half-Life) BSP map viewer library built with **Three.js**. It also includes an optional **React** wrapper for easy integration.
+A high-performance, framework-agnostic GoldSrc (Half-Life 1) BSP map viewer library built with **Three.js**. It includes full map rendering, WAD3 texture loading, lightmaps, entity parsing, FGD metadata support, and an optional **React** wrapper component (`ViewerCanvas`) for seamless UI integration.
 
 ---
 
-### 🎥 Demo
+## 🌐 Live Demo
+
+Try the interactive showcase directly in your browser:  
+👉 **[https://urgorri.github.io/goldsrc-bsp-viewer/](https://urgorri.github.io/goldsrc-bsp-viewer/)**
 
 ![GoldSrc BSP Viewer Demo 1](./resources/demo1.gif)
 
@@ -26,20 +31,22 @@ Integrate it into any DOM container:
 ```javascript
 import { BspViewer } from 'goldsrc-bsp-viewer';
 
+// 1. Initialize viewer
 const viewer = new BspViewer({
   container: document.getElementById('viewer-root'),
-  antialias: true
+  antialias: true,
+  showAxes: true
 });
 
-// Load a map (buffers can be obtained via fetch, file inputs, etc.)
-await viewer.loadMap(bspArrayBuffer, [wadArrayBuffer1, wadArrayBuffer2]);
+// 2. Load a map from URLs or ArrayBuffers
+await viewer.loadMapFromUrls('/maps/c1a2d.bsp', ['/textures/halflife.wad']);
 ```
 
 ---
 
 ## ⚛️ React Usage
 
-The library includes a `ViewerCanvas` component for React applications.
+The library includes a pre-packaged `<ViewerCanvas />` component for React applications.
 
 ```tsx
 import { ViewerCanvas } from 'goldsrc-bsp-viewer';
@@ -50,8 +57,9 @@ function App() {
       <ViewerCanvas
         pvsEnabled={true}
         showPointEntities={true}
-        // ... other options
+        showAxes={true}
         onProgress={(percent, message) => console.log(`${message}: ${percent}%`)}
+        onEntitySelect={(entity) => console.log('Selected:', entity)}
       />
     </div>
   );
@@ -60,69 +68,68 @@ function App() {
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-- **🚀 BSP v30 Parsing**: Robust parsing of GoldSrc map files.
-- **🖼️ WAD3 Support**: Dynamic loading of external textures from multiple `.wad` files.
-- **💡 Advanced Lightmapping**: High-quality lighting using atlas-based lightmaps with overbrightening and gamma correction.
-- **🔍 Entity Inspector**: Interactive selection and inspection of entity key-value pairs.
-- **🔗 Entity Connections**: Visualize `target` and `targetname` relationships.
-- **🏗️ FGD Integration**: Support for FGD files for meaningful entity metadata.
-- **🕹️ FPS Controls**: Smooth noclip movement with acceleration and friction.
-- **🛠️ Customization**: Toggleable wireframes, axes, transparency, and texture filtering.
+- **🚀 BSP v30 Parsing**: Fast parsing and geometry generation for GoldSrc map files.
+- **🖼️ WAD3 & Embedded Textures**: Dynamic texture loading from `.wad` archives and fallback to embedded BSP textures.
+- **💡 Advanced Lightmaps**: High-fidelity map lighting using atlas-based lightmap textures with overbrightening and gamma correction.
+- **🔍 Interactive Entity Inspector**: Raycasting entity selection with full key-value metadata inspection.
+- **🔗 Entity Connections**: Visual lines illustrating `target` to `targetname` entity triggers and links.
+- **🏗️ FGD Metadata**: Parse Half-Life FGD definitions for rich entity names, model references, and property descriptions.
+- **🕹️ FPS Noclip Controls**: First-person controls with smooth acceleration, collision checking, and speed multipliers.
+- **🛠️ Flexible Visual Toggles**: Wireframe overlays, map axes, AAATRIGGER transparency adjustments, texture filtering modes, and PVS visibility toggles.
 
 ---
 
-## 📖 Detailed Usage
+## 📖 Detailed API Usage
 
-### Initializing the Viewer
+### Viewer Configuration
 
-The `BspViewer` constructor accepts an options object:
+The `BspViewer` class accepts options for custom styling and performance tuning:
 
 ```typescript
 const viewer = new BspViewer({
-    container: HTMLElement,      // Required
-    backgroundColor: number,     // Default: 0x050505
-    antialias: boolean,          // Default: true
-    showAxes: boolean,           // Default: true
+    container: HTMLElement,           // HTML element container (Required)
+    backgroundColor: 0x050505,         // Background clear color
+    antialias: true,                   // WebGL antialiasing
+    showAxes: true,                    // Display coordinate axes widget
+    showWireframes: false,             // Render brush wireframes
+    pvsEnabled: false,                 // Potentially Visible Set occlusion culling
+    textureFiltering: true,            // Bilinear texture filtering (true = Linear, false = Nearest)
+    lightmapFiltering: true,           // Lightmap smoothing
+    aaaTriggerOpacity: 0.5,            // Opacity for trigger brushes (0.0 to 1.0)
 
     // Callbacks
-    onProgress: (percent, msg) => { ... },
-    onEntitySelect: (entity) => { ... },
-    onLockChange: (locked) => { ... },
-
-    // Rendering Options
-    pvsEnabled: boolean,
-    textureFiltering: boolean,
-    lightmapFiltering: boolean,
-    // ... and more
+    onProgress: (percent, msg) => {},  // Loading status updater
+    onEntitySelect: (entity) => {},    // Entity pick listener
+    onLockChange: (locked) => {},      // Pointer Lock status change listener
 });
 ```
 
-### Loading Files
-
-You can load map files directly from URLs, HTML `File` objects, or raw `ArrayBuffer` instances:
+### Loading Map Assets
 
 ```javascript
-// 1. Load directly from URLs
-await viewer.loadMapFromUrls('/maps/c1a2d.bsp', ['/textures/halflife.wad']);
+// 1. Direct URLs fetch
+await viewer.loadMapFromUrls('/maps/c1a2d.bsp', ['/textures/halflife.wad'], '/fgd/halflife.fgd');
 
-// 2. Load from HTML File inputs / Drag & Drop
-await viewer.loadMapFromFiles(bspFile, wadFileList, fgdFileList);
+// 2. Browser File Inputs / Drag & Drop
+await viewer.loadMapFromFiles(bspFile, wadFileList, fgdFile);
 
-// 3. Load from raw ArrayBuffer
-await viewer.loadMap(bspBuffer, [wadBuffer1, wadBuffer2]);
+// 3. Raw ArrayBuffer instances
+await viewer.loadMap(bspArrayBuffer, [wadArrayBuffer1, wadArrayBuffer2]);
 ```
 
-### Event Handling
+### Event System
 
 ```javascript
 viewer.addEventListener('progress', ({ percent, message }) => {
-    console.log(`Loading: ${percent}% - ${message}`);
+    console.log(`[${percent}%] ${message}`);
 });
 
 viewer.addEventListener('entitySelect', (entity) => {
-    if (entity) console.log('Selected entity class:', entity.classname);
+    if (entity) {
+        console.log('Selected entity class:', entity.classname);
+    }
 });
 ```
 
@@ -130,30 +137,35 @@ viewer.addEventListener('entitySelect', (entity) => {
 
 ## 🕹️ Controls
 
-| Action | Control |
+| Action | Key / Input |
 | :--- | :--- |
 | **Move** | `W` `A` `S` `D` |
-| **Up / Down** | `Space` / `Left Ctrl` |
+| **Ascend / Descend** | `Space` / `Left Ctrl` |
 | **Sprint** | Hold `Shift` |
-| **Look Around** | `Mouse` (Click to lock) |
-| **Select Entity** | `Left Click` (While locked) |
+| **Look Around** | `Mouse` (Click canvas to capture pointer) |
+| **Select Entity** | `Left Click` on entity (While mouse locked) |
 | **Unlock Mouse** | `Esc` |
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please check out [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution guidelines.
+
+## 📜 Changelog
+
+Detailed release updates and changes can be found in the [CHANGELOG.md](CHANGELOG.md).
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This library is licensed under the [MIT License](LICENSE).
 
 ## 👤 Author
 
 **Gastón Urgorri**
 - GitHub: [@urgorri](https://github.com/urgorri)
+- Live Demo: [urgorri.github.io/goldsrc-bsp-viewer](https://urgorri.github.io/goldsrc-bsp-viewer/)
 - Email: [urgorrigaston@gmail.com](mailto:urgorrigaston@gmail.com)
 
 ---
-*Developed with ❤️ for the GoldSrc modding community.*
+*Built for the Half-Life / GoldSrc modding community.*
