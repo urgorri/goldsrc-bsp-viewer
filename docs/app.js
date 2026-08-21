@@ -70,6 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
             autoPointerLock: autoPointerLockCheck.checked,
             aaaTriggerOpacity: parseInt(opacitySlider.value, 10)
         });
+
+        // Ensure crosshair visibility is applied on initial load
+        if (showCrosshairCheck.checked) {
+            viewer.setOptions({ showCrosshair: true });
+        }
     } catch (err) {
         console.error("Failed to initialize BspViewer:", err);
         hideLoadingOverlay();

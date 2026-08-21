@@ -107,10 +107,10 @@ export class BspViewer {
         this.setupEventListeners();
         this.startAnimate();
 
+        this.createCrosshair();
+
         // Apply initial options
         this.applyOptions();
-
-        this.createCrosshair();
     }
 
     private createCrosshair() {
@@ -127,6 +127,7 @@ export class BspViewer {
             this.crosshairElement.style.userSelect = 'none';
             this.crosshairElement.style.display = 'none'; // Hidden by default
             this.container.appendChild(this.crosshairElement);
+            this.updateCrosshairVisibility();
         }
     }
 
