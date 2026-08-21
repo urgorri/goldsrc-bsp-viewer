@@ -18,16 +18,16 @@ Try the interactive showcase directly in your browser:
 
 ## 🚀 Quick Start (Vanilla JS)
 
-Install the library via npm:
+Install the library via npm or GitHub Packages:
 
 ```bash
-npm install goldsrc-bsp-viewer
+npm install @urgorri/goldsrc-bsp-viewer
 ```
 
 Integrate it into any DOM container:
 
 ```javascript
-import { BspViewer } from 'goldsrc-bsp-viewer';
+import { BspViewer } from '@urgorri/goldsrc-bsp-viewer';
 
 // 1. Initialize viewer
 const viewer = new BspViewer({
@@ -47,7 +47,7 @@ await viewer.loadMapFromUrls('/maps/c1a2d.bsp', ['/textures/halflife.wad']);
 The library includes a pre-packaged `<ViewerCanvas />` component for React applications.
 
 ```tsx
-import { ViewerCanvas } from 'goldsrc-bsp-viewer';
+import { ViewerCanvas } from '@urgorri/goldsrc-bsp-viewer';
 
 function App() {
   return (
