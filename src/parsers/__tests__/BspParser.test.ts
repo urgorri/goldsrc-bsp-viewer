@@ -103,4 +103,85 @@ describe('BspParser.parseEntities', () => {
 
         expect(bsp.entities.length).toBe(0);
     });
+
+    it('should handle Windows CR-LF line endings and tab whitespace formatting', () => {
+        const entityText = "{\r\n\t\"classname\"\t\"func_door\"\r\n\t\"targetname\"\t\"door1\"\r\n}\r\n";
+        const buffer = createMockBspBuffer(entityText);
+        const parser = new BspParser(buffer);
+        const bsp = parser.parse();
+
+        expect(bsp.entities.length).toBe(1);
+        expect(bsp.entities[0]).toEqual({
+            classname: 'func_door',
+            targetname: 'door1'
+        });
+    });
+
+    it('should handle common BSP entity properties including target, targetname, origin, model, angles, and spawnflags', () => {
+        const entityText = `{
+"classname" "trigger_once"
+"target" "door_seq"
+"targetname" "trig_door"
+"origin" "128 -256 64"
+"model" "*1"
+"angles" "0 90 0"
+"spawnflags" "1"
+}`;
+        const buffer = createMockBspBuffer(entityText);
+        const parser = new BspParser(buffer);
+        const bsp = parser.parse();
+
+        expect(bsp.entities.length).toBe(1);
+        expect(bsp.entities[0]).toEqual({
+            classname: 'trigger_once',
+            target: 'door_seq',
+            targetname: 'trig_door',
+            origin: '128 -256 64',
+            model: '*1',
+            angles: '0 90 0',
+            spawnflags: '1'
+        });
+    });
+
+    it('should handle empty key-value properties, file path strings, and special characters', () => {
+        const entityText = `{
+"classname" "ambient_generic"
+"target" ""
+"message" "ambience/wind_outer.wav"
+"netname" "Custom #1 (Value)"
+}`;
+        const buffer = createMockBspBuffer(entityText);
+        const parser = new BspParser(buffer);
+        const bsp = parser.parse();
+
+        expect(bsp.entities.length).toBe(1);
+        expect(bsp.entities[0]).toEqual({
+            classname: 'ambient_generic',
+            target: '',
+            message: 'ambience/wind_outer.wav',
+            netname: 'Custom #1 (Value)'
+        });
+    });
+
+    it('should ignore comments, malformed lines, and unclosed entity blocks missing closing brace', () => {
+        const entityText = `// Map entity Lump
+{
+"classname" "info_player_deathmatch"
+// comment line inside block
+malformed line without quotes
+"origin" "64 64 0"
+}
+{
+"classname" "unclosed_entity"
+"origin" "100 100 0"`;
+        const buffer = createMockBspBuffer(entityText);
+        const parser = new BspParser(buffer);
+        const bsp = parser.parse();
+
+        expect(bsp.entities.length).toBe(1);
+        expect(bsp.entities[0]).toEqual({
+            classname: 'info_player_deathmatch',
+            origin: '64 64 0'
+        });
+    });
 });
